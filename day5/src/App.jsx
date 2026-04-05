@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 function App() {
   const [form, setForm] = useState({
     name: "",
@@ -9,15 +11,22 @@ function App() {
 
   const [users, setUsers] = useState([]);
   const [message, setMessage] = useState("");
-  const [editIndex, setEditIndex] = useState(null);
+  const [errors, setErrors] = useState({});
+  const [editId, setEditId] = useState(null);
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch("http://localhost:8080/users");
+      const response = await fetch(`${API_BASE_URL}/users`);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch users");
+      }
+
       const data = await response.json();
       setUsers(data);
-    } catch {
+    } catch (error) {
       setMessage("Failed to connect to backend");
+      console.error(error);
     }
   };
 
@@ -30,17 +39,24 @@ function App() {
       ...form,
       [e.target.name]: e.target.value,
     });
+
+    setErrors({
+      ...errors,
+      [e.target.name]: "",
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage("");
+    setErrors({});
 
     try {
-      let url = "http://localhost:8080/users";
+      let url = `${API_BASE_URL}/users`;
       let method = "POST";
 
-      if (editIndex !== null) {
-        url = `http://localhost:8080/users/${editIndex}`;
+      if (editId !== null) {
+        url = `${API_BASE_URL}/users/${editId}`;
         method = "PUT";
       }
 
@@ -52,42 +68,53 @@ function App() {
         body: JSON.stringify(form),
       });
 
-      const result = await response.text();
-      setMessage(result);
+      if (!response.ok) {
+        if (response.status === 400) {
+          const errorData = await response.json();
+          setErrors(errorData);
+          return;
+        }
+        throw new Error("Request failed");
+      }
+
+      await response.json();
+      setMessage(editId !== null ? "User updated successfully" : "User added successfully");
 
       setForm({ name: "", email: "" });
-      setEditIndex(null);
+      setEditId(null);
 
       fetchUsers();
-    } catch {
+    } catch (error) {
       setMessage("Failed to connect to backend");
+      console.error(error);
     }
   };
 
-  const handleEdit = (user, index) => {
+  const handleEdit = (user) => {
     setForm({
       name: user.name,
       email: user.email,
     });
-    setEditIndex(index);
+    setEditId(user.id);
+    setErrors({});
     setMessage("");
   };
 
-  const handleDelete = async (index) => {
+  const handleDelete = async (id) => {
     try {
-      const response = await fetch(
-        `http://localhost:8080/users/${index}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/users/${id}`, {
+        method: "DELETE",
+      });
 
-      const result = await response.text();
-      setMessage(result);
+      if (!response.ok) {
+        throw new Error("Delete failed");
+      }
 
+      setMessage("User deleted successfully");
       fetchUsers();
-    } catch {
+    } catch (error) {
       setMessage("Delete failed");
+      console.error(error);
     }
   };
 
@@ -104,6 +131,7 @@ function App() {
             value={form.name}
             onChange={handleChange}
           />
+          {errors.name && <p className="error-message">{errors.name}</p>}
 
           <input
             type="email"
@@ -112,9 +140,10 @@ function App() {
             value={form.email}
             onChange={handleChange}
           />
+          {errors.email && <p className="error-message">{errors.email}</p>}
 
           <button type="submit">
-            {editIndex !== null ? "Update User" : "Add User"}
+            {editId !== null ? "Update User" : "Add User"}
           </button>
         </form>
 
@@ -122,18 +151,19 @@ function App() {
 
         <h3>Users List</h3>
 
-        {users.map((user, index) => (
-          <div key={index} className="user-card">
+        {users.map((user) => (
+          <div key={user.id} className="user-card">
             <p>{user.name}</p>
             <p>{user.email}</p>
 
-            <button onClick={() => handleEdit(user, index)}>
+            <button type="button" onClick={() => handleEdit(user)}>
               Edit
             </button>
 
             <button
+              type="button"
               className="delete-btn"
-              onClick={() => handleDelete(index)}
+              onClick={() => handleDelete(user.id)}
             >
               Delete
             </button>

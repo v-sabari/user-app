@@ -1,33 +1,28 @@
+import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-
-function isTokenExpired(token) {
-  if (!token) {
-    return true;
-  }
-
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    const exp = payload.exp;
-
-    if (!exp) {
-      return true;
-    }
-
-    return Date.now() >= exp * 1000;
-  } catch (error) {
-    return true;
-  }
-}
+import { apiRequest } from "./apiClient";
 
 function ProtectedRoute({ children }) {
-  const token = localStorage.getItem("token");
+  const [loading, setLoading] = useState(true);
+  const [allowed, setAllowed] = useState(false);
 
-  if (!token || isTokenExpired(token)) {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userEmail");
-    localStorage.removeItem("role");
-    return <Navigate to="/login" />;
-  }
+  useEffect(() => {
+    const verify = async () => {
+      try {
+        await apiRequest("/auth/me", { method: "GET" });
+        setAllowed(true);
+      } catch {
+        setAllowed(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    verify();
+  }, []);
+
+  if (loading) return <div>Checking session...</div>;
+  if (!allowed) return <Navigate to="/login" />;
 
   return children;
 }

@@ -1,790 +1,409 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-const API_BASE_URL = "http://localhost:8080";
+import { apiRequest, logout } from "./apiClient";
 
 function Dashboard() {
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
-
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-  });
 
   const [users, setUsers] = useState([]);
+  const [sessions, setSessions] = useState([]);
+  const [profile, setProfile] = useState(null);
+
   const [message, setMessage] = useState("");
-  const [errors, setErrors] = useState({});
-  const [editId, setEditId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   const [page, setPage] = useState(0);
-  const [size] = useState(3);
+  const [size] = useState(5);
   const [totalPages, setTotalPages] = useState(0);
-  const [sortDirection, setSortDirection] = useState("asc");
 
-  const [profile, setProfile] = useState(null);
-  const [profileEditMode, setProfileEditMode] = useState(false);
-  const [profileForm, setProfileForm] = useState({
-    name: "",
-    email: "",
-  });
+  const [loginAlert, setLoginAlert] = useState(null);
 
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
+  // ✅ Day 59 — Quick stats state
+  const [quickStats, setQuickStats] = useState(null);
+  const [activeSessions, setActiveSessions] = useState(null);
 
-  const getAuthHeaders = (includeContentType = false) => {
-    const headers = {};
+  const isAdmin = profile?.role === "ADMIN";
 
-    if (includeContentType) {
-      headers["Content-Type"] = "application/json";
+  useEffect(() => {
+    const alert = localStorage.getItem("loginAlert");
+    if (alert && alert !== "none") {
+      setLoginAlert(alert);
     }
-
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
-    return headers;
-  };
+    localStorage.removeItem("loginAlert");
+  }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userEmail");
-    localStorage.removeItem("role");
+    logout();
     navigate("/login");
   };
 
-  const handleUnauthorized = () => {
-    setMessage("Session expired. Please login again.");
-    handleLogout();
+  const handleLogoutAll = async () => {
+    try {
+      await apiRequest("/auth/logout-all", { method: "POST" });
+      logout();
+      navigate("/login");
+    } catch (err) {
+      setMessage(err.message);
+    }
   };
 
-  const getStatusClass = (status) => {
-    if (status === "ACTIVE") return "status-active";
-    if (status === "INACTIVE") return "status-inactive";
-    return "status-locked";
+  const handleSingleLogout = async (id) => {
+    try {
+      await apiRequest(`/auth/session/${id}`, { method: "DELETE" });
+      setSessions((prev) =>
+        prev.map((s) => s.id === id ? { ...s, active: false } : s)
+      );
+    } catch (err) {
+      setMessage(err.message);
+    }
+  };
+
+  const handleSessionError = (err) => {
+    setMessage(err.message || "Session expired");
+    if (err.message === "Session expired") {
+      logout();
+      navigate("/login");
+    }
   };
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
-        method: "GET",
-        headers: getAuthHeaders(),
-      });
-
-      const data = await response.json();
-
-      if (response.status === 401 || response.status === 403) {
-        handleUnauthorized();
-        return;
-      }
-
-      if (!response.ok || !data.success) {
-        setMessage(data.message || "Failed to fetch profile");
-        return;
-      }
-
+      const data = await apiRequest("/auth/me");
       setProfile(data.data);
-      setProfileForm({
-        name: data.data.name,
-        email: data.data.email,
-      });
-
-      localStorage.setItem("userEmail", data.data.email);
-      localStorage.setItem("role", data.data.role);
-    } catch (error) {
-      setMessage("Failed to load profile");
-      console.error(error);
+    } catch (err) {
+      handleSessionError(err);
     }
   };
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/users?search=${encodeURIComponent(
-          searchTerm
-        )}&page=${page}&size=${size}&sortBy=name&direction=${sortDirection}`,
-        {
-          method: "GET",
-          headers: getAuthHeaders(),
-        }
-      );
+      const query = new URLSearchParams({ search: searchTerm, page, size });
+      const data = await apiRequest(`/users?${query}`);
+      setUsers(data.data.content || []);
+      setTotalPages(data.data.totalPages || 0);
+    } catch (err) {
+      handleSessionError(err);
+    }
+  };
 
-      const data = await response.json();
+  const fetchSessions = async () => {
+    try {
+      const data = await apiRequest("/auth/sessions");
+      setSessions(data.data || []);
+    } catch (err) {
+      handleSessionError(err);
+    }
+  };
 
-      if (response.status === 401 || response.status === 403) {
-        handleUnauthorized();
-        return;
-      }
-
-      if (!response.ok || !data.success) {
-        setMessage(data.message || "Failed to fetch users");
-        return;
-      }
-
-      setUsers(data.data.content);
-      setTotalPages(data.data.totalPages);
-    } catch (error) {
-      setMessage("Failed to connect to backend");
-      console.error(error);
+  // ✅ Day 59 — Fetch quick stats for admin panel
+  const fetchQuickStats = async () => {
+    try {
+      const [analyticsData, sessionsData] = await Promise.all([
+        apiRequest("/analytics/admin", { method: "GET" }),
+        apiRequest("/admin/sessions", { method: "GET" }),
+      ]);
+      setQuickStats(analyticsData.data);
+      setActiveSessions((sessionsData.data || []).length);
+    } catch (err) {
+      // Non-critical — silently ignore if fails
+      console.error("Quick stats error:", err.message);
     }
   };
 
   useEffect(() => {
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-
     fetchProfile();
+    fetchSessions();
   }, []);
 
   useEffect(() => {
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-
-    fetchUsers();
-  }, [page, sortDirection, searchTerm]);
-
-  const role = profile?.role || localStorage.getItem("role");
-  const isAdmin = role === "ADMIN";
-
-  const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
-
-    setErrors({
-      ...errors,
-      [e.target.name]: "",
-    });
-  };
-
-  const handleProfileChange = (e) => {
-    setProfileForm({
-      ...profileForm,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleProfileUpdate = async (e) => {
-    e.preventDefault();
-    setMessage("");
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
-        method: "PUT",
-        headers: getAuthHeaders(true),
-        body: JSON.stringify(profileForm),
-      });
-
-      const data = await response.json();
-
-      if (response.status === 401 || response.status === 403) {
-        handleUnauthorized();
-        return;
-      }
-
-      if (!response.ok || !data.success) {
-        setMessage(data.message || "Profile update failed");
-        return;
-      }
-
-      setProfile(data.data);
-      setProfileForm({
-        name: data.data.name,
-        email: data.data.email,
-      });
-
-      localStorage.setItem("userEmail", data.data.email);
-      localStorage.setItem("role", data.data.role);
-
-      setProfileEditMode(false);
-      setMessage(data.message || "Profile updated successfully");
-    } catch (error) {
-      setMessage("Failed to update profile");
-      console.error(error);
-    }
-  };
-
-  const handlePasswordChange = (e) => {
-    setPasswordForm({
-      ...passwordForm,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleChangePassword = async (e) => {
-    e.preventDefault();
-    setMessage("");
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
-        method: "PUT",
-        headers: getAuthHeaders(true),
-        body: JSON.stringify(passwordForm),
-      });
-
-      const data = await response.json();
-
-      if (response.status === 401 || response.status === 403) {
-        handleUnauthorized();
-        return;
-      }
-
-      if (!response.ok || !data.success) {
-        setMessage(data.message || "Password change failed");
-        return;
-      }
-
-      setPasswordForm({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
-
-      setMessage(data.message || "Password changed successfully");
-    } catch (error) {
-      setMessage("Failed to change password");
-      console.error(error);
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setMessage("");
-    setErrors({});
-
-    if (!isAdmin) {
-      setMessage("Only ADMIN can add or update users");
-      return;
-    }
-
-    try {
-      let url = `${API_BASE_URL}/users`;
-      let method = "POST";
-
-      if (editId !== null) {
-        url = `${API_BASE_URL}/users/${editId}`;
-        method = "PUT";
-      }
-
-      const response = await fetch(url, {
-        method,
-        headers: getAuthHeaders(true),
-        body: JSON.stringify(form),
-      });
-
-      const data = await response.json();
-
-      if (response.status === 401 || response.status === 403) {
-        handleUnauthorized();
-        return;
-      }
-
-      if (!response.ok || !data.success) {
-        if (data.errors) {
-          setErrors(data.errors);
-          return;
-        }
-        setMessage(data.message || "Request failed");
-        return;
-      }
-
-      setMessage(
-        data.message ||
-          (editId !== null
-            ? "User updated successfully"
-            : "User added successfully")
-      );
-
-      setForm({ name: "", email: "" });
-      setEditId(null);
+    if (profile) {
       fetchUsers();
-    } catch (error) {
-      setMessage("Failed to connect to backend");
-      console.error(error);
+      if (profile.role === "ADMIN") {
+        fetchQuickStats();
+      }
     }
-  };
-
-  const handleEdit = (user) => {
-    if (!isAdmin) {
-      setMessage("Only ADMIN can edit users");
-      return;
-    }
-
-    setForm({
-      name: user.name,
-      email: user.email,
-    });
-    setEditId(user.id);
-    setErrors({});
-    setMessage("");
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  };
-
-  const handleDelete = async (id) => {
-    if (!isAdmin) {
-      setMessage("Only ADMIN can delete users");
-      return;
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/users/${id}`, {
-        method: "DELETE",
-        headers: getAuthHeaders(),
-      });
-
-      const data = await response.json();
-
-      if (response.status === 401 || response.status === 403) {
-        handleUnauthorized();
-        return;
-      }
-
-      if (!response.ok || !data.success) {
-        setMessage(data.message || "Delete failed");
-        return;
-      }
-
-      setMessage(data.message || "User deleted successfully");
-
-      if (users.length === 1 && page > 0) {
-        setPage(page - 1);
-      } else {
-        fetchUsers();
-      }
-    } catch (error) {
-      setMessage("Delete failed");
-      console.error(error);
-    }
-  };
-
-  const handleActivate = async (id) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/users/${id}/activate`, {
-        method: "PUT",
-        headers: getAuthHeaders(),
-      });
-
-      const data = await response.json();
-
-      if (response.status === 401 || response.status === 403) {
-        handleUnauthorized();
-        return;
-      }
-
-      if (!response.ok || !data.success) {
-        setMessage(data.message || "Activate failed");
-        return;
-      }
-
-      setMessage(data.message || "User activated successfully");
-      fetchUsers();
-    } catch (error) {
-      setMessage("Activate failed");
-      console.error(error);
-    }
-  };
-
-  const handleDeactivate = async (id) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/users/${id}/deactivate`, {
-        method: "PUT",
-        headers: getAuthHeaders(),
-      });
-
-      const data = await response.json();
-
-      if (response.status === 401 || response.status === 403) {
-        handleUnauthorized();
-        return;
-      }
-
-      if (!response.ok || !data.success) {
-        setMessage(data.message || "Deactivate failed");
-        return;
-      }
-
-      setMessage(data.message || "User deactivated successfully");
-      fetchUsers();
-    } catch (error) {
-      setMessage("Deactivate failed");
-      console.error(error);
-    }
-  };
-
-  const handleLock = async (id) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/users/${id}/lock`, {
-        method: "PUT",
-        headers: getAuthHeaders(),
-      });
-
-      const data = await response.json();
-
-      if (response.status === 401 || response.status === 403) {
-        handleUnauthorized();
-        return;
-      }
-
-      if (!response.ok || !data.success) {
-        setMessage(data.message || "Lock failed");
-        return;
-      }
-
-      setMessage(data.message || "User locked successfully");
-      fetchUsers();
-    } catch (error) {
-      setMessage("Lock failed");
-      console.error(error);
-    }
-  };
-
-  const handleUnlock = async (id) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/users/${id}/unlock`, {
-        method: "PUT",
-        headers: getAuthHeaders(),
-      });
-
-      const data = await response.json();
-
-      if (response.status === 401 || response.status === 403) {
-        handleUnauthorized();
-        return;
-      }
-
-      if (!response.ok || !data.success) {
-        setMessage(data.message || "Unlock failed");
-        return;
-      }
-
-      setMessage(data.message || "User unlocked successfully");
-      fetchUsers();
-    } catch (error) {
-      setMessage("Unlock failed");
-      console.error(error);
-    }
-  };
-
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-    setPage(0);
-  };
-
-  const downloadCSV = () => {
-    const headers = ["Name", "Email", "Status"];
-    const rows = users.map((user) => [user.name, user.email, user.status]);
-
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      [headers, ...rows].map((row) => row.join(",")).join("\n");
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "users.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  }, [profile, page, searchTerm]);
 
   return (
-    <div className="container">
-      <div className="card">
-        <div className="top-bar">
-          <div>
-            <h2>Admin Dashboard</h2>
-            <p className="welcome-text">
-              Manage your profile, security settings, and user accounts.
-            </p>
-          </div>
+    <div style={container}>
 
-          <div className="inline-actions">
-            {isAdmin && (
-              <button
-                type="button"
-                onClick={() => navigate("/audit-logs")}
-              >
-                View Audit Logs
-              </button>
-            )}
-
-            <button
-              type="button"
-              className="logout-btn"
-              onClick={handleLogout}
-            >
-              Logout
-            </button>
-          </div>
+      {/* ===== HEADER ===== */}
+      <div style={header}>
+        <div>
+          <h2>Dashboard</h2>
+          <p style={subText}>Manage users, sessions & security</p>
         </div>
 
-        {message && <p className="message">{message}</p>}
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          <button style={{ ...btn, background: "#2563eb" }} onClick={() => navigate("/profile")}>
+            My Profile
+          </button>
 
-        <div className="dashboard-section">
-          <h3>My Profile</h3>
+          <button style={{ ...btn, background: "#0891b2" }} onClick={() => navigate("/my-activity")}>
+            My Activity
+          </button>
 
-          {profile ? (
-            <>
-              {!profileEditMode ? (
-                <div className="dashboard-meta">
-                  <p><strong>Name:</strong> {profile.name}</p>
-                  <p><strong>Email:</strong> {profile.email}</p>
-                  <p><strong>Role:</strong> {profile.role}</p>
-
-                  <button
-                    type="button"
-                    onClick={() => setProfileEditMode(true)}
-                  >
-                    Edit My Profile
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={handleProfileUpdate}>
-                  <input
-                    type="text"
-                    name="name"
-                    placeholder="Enter name"
-                    value={profileForm.name}
-                    onChange={handleProfileChange}
-                  />
-
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="Enter email"
-                    value={profileForm.email}
-                    onChange={handleProfileChange}
-                  />
-
-                  <div className="inline-actions">
-                    <button type="submit">Save Profile</button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setProfileEditMode(false);
-                        setProfileForm({
-                          name: profile.name,
-                          email: profile.email,
-                        });
-                      }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              )}
-            </>
-          ) : (
-            <p>Loading profile...</p>
-          )}
-        </div>
-
-        <div className="dashboard-section">
-          <h3>Security Settings</h3>
-
-          <form onSubmit={handleChangePassword}>
-            <input
-              type="password"
-              name="currentPassword"
-              placeholder="Enter current password"
-              value={passwordForm.currentPassword}
-              onChange={handlePasswordChange}
-            />
-
-            <input
-              type="password"
-              name="newPassword"
-              placeholder="Enter new password"
-              value={passwordForm.newPassword}
-              onChange={handlePasswordChange}
-            />
-
-            <input
-              type="password"
-              name="confirmPassword"
-              placeholder="Confirm new password"
-              value={passwordForm.confirmPassword}
-              onChange={handlePasswordChange}
-            />
-
-            <button type="submit">Change Password</button>
-          </form>
-        </div>
-
-        <div className="dashboard-section">
-          <h3>User Management</h3>
-
-          {!isAdmin ? (
-            <p className="message">
-              You are in view-only mode. Only ADMIN can add, edit, delete,
-              activate, deactivate, lock, or unlock users.
-            </p>
-          ) : (
-            <>
-              <form onSubmit={handleSubmit}>
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="Enter name"
-                  value={form.name}
-                  onChange={handleChange}
-                />
-                {errors.name && <p className="error-message">{errors.name}</p>}
-
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Enter email"
-                  value={form.email}
-                  onChange={handleChange}
-                />
-                {errors.email && <p className="error-message">{errors.email}</p>}
-
-                <button type="submit">
-                  {editId !== null ? "Update User" : "Add User"}
-                </button>
-              </form>
-
-              <div className="dashboard-toolbar">
-                <input
-                  type="text"
-                  placeholder="Search by name or email"
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                />
-
-                <select
-                  value={sortDirection}
-                  onChange={(e) => {
-                    setSortDirection(e.target.value);
-                    setPage(0);
-                  }}
-                >
-                  <option value="asc">Name A-Z</option>
-                  <option value="desc">Name Z-A</option>
-                </select>
-
-                <button type="button" onClick={downloadCSV}>
-                  Download CSV
-                </button>
-              </div>
-            </>
-          )}
-
-          <h3 style={{ marginTop: "20px" }}>Users List</h3>
-
-          {users.length > 0 ? (
-            <div className="user-list">
-              {users.map((user) => (
-                <div key={user.id} className="user-card">
-                  <p><strong>Name:</strong> {user.name}</p>
-                  <p><strong>Email:</strong> {user.email}</p>
-                  <p>
-                    <strong>Status:</strong>{" "}
-                    <span className={`status-badge ${getStatusClass(user.status)}`}>
-                      {user.status}
-                    </span>
-                  </p>
-
-                  {isAdmin && (
-                    <div
-                      className="user-actions"
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(3, 1fr)",
-                        gap: "10px",
-                        marginTop: "12px",
-                      }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(user)}
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        type="button"
-                        className="delete-btn"
-                        onClick={() => handleDelete(user.id)}
-                      >
-                        Delete
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleActivate(user.id)}
-                      >
-                        Activate
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleDeactivate(user.id)}
-                      >
-                        Deactivate
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleLock(user.id)}
-                      >
-                        Lock
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleUnlock(user.id)}
-                      >
-                        Unlock
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p>No matching users found</p>
-          )}
-
-          <div className="pagination">
-            <button
-              type="button"
-              onClick={() => setPage(page - 1)}
-              disabled={page === 0}
-            >
-              Prev
+          {isAdmin && (
+            <button style={{ ...btn, background: "#7c3aed" }} onClick={() => navigate("/users")}>
+              Manage Users
             </button>
+          )}
 
-            <span>
-              Page {totalPages === 0 ? 0 : page + 1} of {totalPages}
-            </span>
-
-            <button
-              type="button"
-              onClick={() => setPage(page + 1)}
-              disabled={page >= totalPages - 1 || totalPages === 0}
-            >
-              Next
+          {isAdmin && (
+            <button style={{ ...btn, background: "#be185d" }} onClick={() => navigate("/security-dashboard")}>
+              Security Dashboard
             </button>
-          </div>
+          )}
+
+          {isAdmin && (
+            <button style={{ ...btn, background: "#0f766e" }} onClick={() => navigate("/active-sessions")}>
+              Active Sessions
+            </button>
+          )}
+
+          {isAdmin && (
+            <button style={{ ...btn, background: "#0f766e" }} onClick={() => navigate("/audit-logs")}>
+              Audit Logs
+            </button>
+          )}
+
+          {isAdmin && (
+            <button style={{ ...btn, background: "#b45309" }} onClick={() => navigate("/analytics")}>
+              Analytics
+            </button>
+          )}
+
+          <button style={btn} onClick={handleLogout}>Logout</button>
+          <button style={dangerBtn} onClick={handleLogoutAll}>Logout All</button>
         </div>
       </div>
+
+      {/* ===== DAY 59 — ADMIN QUICK STATS ===== */}
+      {isAdmin && quickStats && (
+        <div style={quickStatsGrid}>
+
+          <div style={{ ...statCard, borderTop: "3px solid #2563eb" }}>
+            <p style={statLabel}>Total Users</p>
+            <p style={{ ...statValue, color: "#2563eb" }}>{quickStats.totalUsers}</p>
+            <p style={statSub}>registered accounts</p>
+          </div>
+
+          <div style={{ ...statCard, borderTop: "3px solid #16a34a" }}>
+            <p style={statLabel}>Active Users</p>
+            <p style={{ ...statValue, color: "#16a34a" }}>{quickStats.activeUsers}</p>
+            <p style={statSub}>
+              {quickStats.totalUsers > 0
+                ? Math.round((quickStats.activeUsers / quickStats.totalUsers) * 100)
+                : 0}% of total
+            </p>
+          </div>
+
+          <div style={{ ...statCard, borderTop: "3px solid #dc2626" }}>
+            <p style={statLabel}>Locked Users</p>
+            <p style={{ ...statValue, color: quickStats.lockedUsers > 0 ? "#dc2626" : "#111827" }}>
+              {quickStats.lockedUsers}
+            </p>
+            <p style={statSub}>
+              {quickStats.lockedUsers > 0 ? "⚠️ action needed" : "✅ all clear"}
+            </p>
+          </div>
+
+          <div style={{ ...statCard, borderTop: "3px solid #0891b2" }}>
+            <p style={statLabel}>Live Sessions</p>
+            <p style={{ ...statValue, color: "#0891b2" }}>{activeSessions}</p>
+            <p style={statSub}>system-wide</p>
+          </div>
+
+          <div style={{ ...statCard, borderTop: "3px solid #7c3aed" }}>
+            <p style={statLabel}>Audit Logs</p>
+            <p style={{ ...statValue, color: "#7c3aed" }}>{quickStats.totalAuditLogs}</p>
+            <p style={statSub}>
+              {quickStats.successfulActions} success / {quickStats.failedActions} failed
+            </p>
+          </div>
+
+          <div style={{ ...statCard, borderTop: "3px solid #d97706" }}>
+            <p style={statLabel}>Admin Users</p>
+            <p style={{ ...statValue, color: "#d97706" }}>{quickStats.adminUsers}</p>
+            <p style={statSub}>{quickStats.normalUsers} regular users</p>
+          </div>
+
+        </div>
+      )}
+
+      {/* ===== DAY 50 — SUSPICIOUS LOGIN BANNER ===== */}
+      {loginAlert === "suspicious" && (
+        <div style={suspiciousBanner}>
+          <div style={{ flex: 1 }}>
+            <p style={{ margin: "0 0 6px", fontWeight: "700", color: "#991b1b", fontSize: "15px" }}>
+              🚨 Suspicious Login Detected
+            </p>
+            <p style={{ margin: "0 0 12px", color: "#7f1d1d", fontSize: "13px", lineHeight: "1.5" }}>
+              Your account was accessed from a new IP address on a known device.
+              If this was not you, change your password immediately.
+            </p>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              <button style={{ ...btn, background: "#dc2626", padding: "6px 14px", fontSize: "13px" }} onClick={() => navigate("/profile")}>
+                Change Password
+              </button>
+              <button style={{ ...btn, background: "#374151", padding: "6px 14px", fontSize: "13px" }} onClick={() => navigate("/my-activity")}>
+                View My Activity
+              </button>
+            </div>
+          </div>
+          <button onClick={() => setLoginAlert(null)} style={dismissBtn} title="Dismiss">✕</button>
+        </div>
+      )}
+
+      {/* ===== DAY 50 — NEW DEVICE LOGIN BANNER ===== */}
+      {loginAlert === "newDevice" && (
+        <div style={newDeviceBanner}>
+          <div style={{ flex: 1 }}>
+            <p style={{ margin: "0 0 6px", fontWeight: "700", color: "#92400e", fontSize: "15px" }}>
+              📱 New Device Login
+            </p>
+            <p style={{ margin: "0 0 12px", color: "#78350f", fontSize: "13px", lineHeight: "1.5" }}>
+              Your account was accessed from a new device. If this was not you,
+              change your password and terminate all active sessions immediately.
+            </p>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              <button style={{ ...btn, background: "#d97706", padding: "6px 14px", fontSize: "13px" }} onClick={() => navigate("/profile")}>
+                Secure My Account
+              </button>
+              <button style={{ ...btn, background: "#374151", padding: "6px 14px", fontSize: "13px" }} onClick={() => navigate("/my-activity")}>
+                View My Activity
+              </button>
+            </div>
+          </div>
+          <button onClick={() => setLoginAlert(null)} style={dismissBtn} title="Dismiss">✕</button>
+        </div>
+      )}
+
+      {message && <p style={errorText}>{message}</p>}
+
+      {/* ===== PROFILE ===== */}
+      <div style={card}>
+        <h3>My Profile</h3>
+        {profile && (
+          <>
+            <p><b>Name:</b> {profile.name}</p>
+            <p><b>Email:</b> {profile.email}</p>
+            <p><b>Role:</b> {profile.role}</p>
+          </>
+        )}
+      </div>
+
+      {/* ===== SESSIONS ===== */}
+      <div style={card}>
+        <h3>Active Sessions</h3>
+        {sessions.length === 0 && <p>No sessions found</p>}
+        {sessions.map((s) => (
+          <div key={s.id} style={sessionCard}>
+            <div>
+              <p><b>Device:</b> {s.deviceType}</p>
+              <p><b>IP:</b> {s.ipAddress}</p>
+              <p>
+                <b>Status:</b>{" "}
+                <span style={{ color: s.active ? "green" : "gray" }}>
+                  {s.active ? "Active" : "Inactive"}
+                </span>
+              </p>
+            </div>
+            {s.active ? (
+              <button style={dangerBtn} onClick={() => handleSingleLogout(s.id)}>Logout</button>
+            ) : (
+              <span style={inactiveText}>Logged out</span>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* ===== USERS ===== */}
+      {isAdmin && (
+        <div style={card}>
+          <h3>Users</h3>
+          <input
+            style={input}
+            placeholder="Search users..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          {users.map((u) => (
+            <div key={u.id} style={userCard}>
+              <div>
+                <p><b>{u.name}</b></p>
+                <p>{u.email}</p>
+                <p>{u.status}</p>
+              </div>
+            </div>
+          ))}
+          <div style={pagination}>
+            <button style={btn} disabled={page === 0} onClick={() => setPage(page - 1)}>Prev</button>
+            <span>{page + 1} / {totalPages}</span>
+            <button style={btn} disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>Next</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+/* ===== STYLES ===== */
+
+const container = { maxWidth: "1100px", margin: "auto", padding: "30px" };
+const header = { display: "flex", justifyContent: "space-between", marginBottom: "25px", flexWrap: "wrap", gap: "12px" };
+const subText = { color: "gray" };
+const card = { border: "1px solid #ddd", borderRadius: "10px", padding: "20px", marginBottom: "20px", background: "#fff" };
+const sessionCard = { display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #eee", padding: "10px 0" };
+const userCard = { borderBottom: "1px solid #eee", padding: "10px 0" };
+const pagination = { marginTop: "10px", display: "flex", gap: "10px", alignItems: "center" };
+const btn = { padding: "6px 12px", cursor: "pointer", border: "none", borderRadius: "6px", color: "white", background: "#374151" };
+const dangerBtn = { padding: "6px 12px", background: "red", color: "white", border: "none", borderRadius: "6px", cursor: "pointer" };
+const input = { width: "100%", padding: "8px", marginBottom: "10px" };
+const errorText = { color: "red" };
+const inactiveText = { color: "gray", fontSize: "12px" };
+
+// ✅ Day 59 — Quick stats styles
+const quickStatsGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+  gap: "14px",
+  marginBottom: "24px",
+};
+
+const statCard = {
+  background: "#ffffff",
+  border: "1px solid #e5e7eb",
+  borderRadius: "12px",
+  padding: "16px",
+  boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+};
+
+const statLabel = {
+  margin: "0 0 6px",
+  fontSize: "12px",
+  fontWeight: "600",
+  color: "#6b7280",
+  textTransform: "uppercase",
+  letterSpacing: "0.05em",
+};
+
+const statValue = {
+  margin: "0 0 4px",
+  fontSize: "28px",
+  fontWeight: "800",
+  color: "#111827",
+  lineHeight: "1",
+};
+
+const statSub = {
+  margin: 0,
+  fontSize: "12px",
+  color: "#9ca3af",
+};
+
+const suspiciousBanner = { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", background: "#fee2e2", border: "1px solid #fca5a5", borderRadius: "12px", padding: "16px 20px", marginBottom: "20px" };
+const newDeviceBanner = { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", background: "#fef3c7", border: "1px solid #fde68a", borderRadius: "12px", padding: "16px 20px", marginBottom: "20px" };
+const dismissBtn = { background: "transparent", border: "none", cursor: "pointer", fontSize: "16px", color: "#6b7280", padding: "0 4px", flexShrink: 0 };
 
 export default Dashboard;

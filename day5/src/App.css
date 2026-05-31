@@ -71,11 +71,19 @@ select:focus {
   background: #ffffff;
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
 }
+.dashboard-btn {
+  width: auto;
+}
+.button-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  width: 100%;
+}
 
-button {
+.button-container button {
   width: 100%;
   padding: 12px 14px;
-  margin-top: 10px;
   border: none;
   border-radius: 10px;
   color: white;
@@ -84,6 +92,10 @@ button {
   font-size: 15px;
   font-weight: 600;
   transition: all 0.2s ease;
+}
+
+.button-container button:hover {
+  background: #1d4ed8;
 }
 
 button:hover {
@@ -406,4 +418,31 @@ button:disabled {
 .user-actions button {
   width: 100%;       /* fill each grid cell */
   margin-top: 0;     /* remove spacing issue */
+}
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.analytics-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
+}
+
+.analytics-card p {
+  margin: 0 0 8px;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.analytics-card h3 {
+  margin: 0;
+  color: #111827;
+  font-size: 28px;
 }

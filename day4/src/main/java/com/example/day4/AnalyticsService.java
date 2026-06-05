@@ -2,6 +2,8 @@ package com.example.day4;
 
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.util.*;
 import java.util.List;
 
 @Service
@@ -70,5 +72,52 @@ public class AnalyticsService {
                 failedActions,
                 actionCounts
         );
+    }
+
+    public List<DailyCountResponse> getTrend(
+            String action,
+            int days
+    ) {
+
+        LocalDate today = LocalDate.now();
+        LocalDate startDay = today.minusDays(days - 1);
+
+        List<Object[]> rows =
+                auditLogRepository.countActionTrend(
+                        action,
+                        startDay.atStartOfDay()
+                );
+
+        Map<String, Long> counts = new HashMap<>();
+
+        for (Object[] row : rows) {
+
+            String date = row[0].toString();
+
+            long count =
+                    ((Number) row[1]).longValue();
+
+            counts.put(date, count);
+        }
+
+        List<DailyCountResponse> result =
+                new ArrayList<>();
+
+        for (int i = 0; i < days; i++) {
+
+            LocalDate current =
+                    startDay.plusDays(i);
+
+            String key = current.toString();
+
+            result.add(
+                    new DailyCountResponse(
+                            key,
+                            counts.getOrDefault(key, 0L)
+                    )
+            );
+        }
+
+        return result;
     }
 }

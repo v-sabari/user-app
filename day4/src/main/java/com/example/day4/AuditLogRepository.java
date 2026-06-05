@@ -133,4 +133,16 @@ public interface AuditLogRepository
             String status,
             Pageable pageable
     );
+    @Query("""
+    SELECT FUNCTION('DATE', a.createdAt), COUNT(a)
+    FROM AuditLog a
+    WHERE a.action = :action
+    AND a.createdAt >= :startDate
+    GROUP BY FUNCTION('DATE', a.createdAt)
+    ORDER BY FUNCTION('DATE', a.createdAt)
+    """)
+    List<Object[]> countActionTrend(
+            String action,
+            LocalDateTime startDate
+    );
 }

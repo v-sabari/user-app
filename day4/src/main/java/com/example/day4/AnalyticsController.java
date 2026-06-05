@@ -23,4 +23,18 @@ public class AnalyticsController {
                 ApiResponse.success("Analytics fetched successfully", response)
         );
     }
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/trend")
+    public ResponseEntity<?> getTrend(
+            @RequestParam String action,
+            @RequestParam(defaultValue = "7") int days
+    ) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Trend fetched successfully",
+                        analyticsService.getTrend(action, days)
+                )
+        );
+    }
 }

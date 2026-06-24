@@ -13,6 +13,15 @@ import Users from "./Users";
 import SecurityDashboard from "./SecurityDashboard";
 import MyActivity from "./MyActivity";
 import ActiveSessions from "./ActiveSessions";
+import SecurityAudit from "./SecurityAudit";
+import RiskAssessment from "./RiskAssessment";
+import SecurityAlerts from "./SecurityAlerts";
+import AdminAlerts from "./AdminAlerts";
+import CriticalAlerts from "./CriticalAlerts";
+import AlertHistory from "./AlertHistory";
+// ✅ Day 81 — Import 2FA setup component
+import TwoFactorSetup from "./TwoFactorSetup";
+import LoginHistory from "./LoginHistory";
 
 function App() {
   return (
@@ -50,7 +59,6 @@ function App() {
         }
       />
 
-      {/* ✅ Day 46 — Profile Management */}
       <Route
         path="/profile"
         element={
@@ -60,7 +68,6 @@ function App() {
         }
       />
 
-      {/* ✅ Day 47 — Admin User Management */}
       <Route
         path="/users"
         element={
@@ -70,7 +77,6 @@ function App() {
         }
       />
 
-      {/* ✅ Day 48 — Admin Security Dashboard */}
       <Route
         path="/security-dashboard"
         element={
@@ -80,7 +86,6 @@ function App() {
         }
       />
 
-      {/* ✅ Day 49 — Personal Activity Log */}
       <Route
         path="/my-activity"
         element={
@@ -90,7 +95,6 @@ function App() {
         }
       />
 
-      {/* ✅ Day 55 — Admin Active Sessions Manager */}
       <Route
         path="/active-sessions"
         element={
@@ -99,7 +103,80 @@ function App() {
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/security-audit"
+        element={
+          <ProtectedRoute>
+            <SecurityAudit />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/risk-assessment"
+        element={
+          <ProtectedRoute>
+            <RiskAssessment />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/security-alerts"
+        element={
+          <ProtectedRoute>
+            <SecurityAlerts />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/alerts"
+        element={
+          <ProtectedRoute>
+            <AdminAlerts />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/alerts/critical"
+        element={
+          <ProtectedRoute>
+            <CriticalAlerts />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/security-alerts/history"
+        element={
+          <ProtectedRoute>
+            <AlertHistory />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ✅ Day 81 — Two-Factor Authentication Setup */}
+      <Route
+        path="/2fa-setup"
+        element={
+          <ProtectedRoute>
+            <TwoFactorSetup />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/login-history"
+        element={
+          <ProtectedRoute>
+            <LoginHistory />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
+    
   );
 }
 

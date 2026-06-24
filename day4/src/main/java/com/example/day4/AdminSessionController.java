@@ -26,7 +26,7 @@ public class AdminSessionController {
         this.auditLogService = auditLogService;
     }
 
-    // ================= GET ALL ACTIVE SESSIONS (Day 55) =================
+    // ================= GET ALL ACTIVE SESSIONS =================
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<?> getAllActiveSessions() {
@@ -43,7 +43,7 @@ public class AdminSessionController {
         );
     }
 
-    // ================= TERMINATE ANY SESSION (Day 55) =================
+    // ================= TERMINATE ONE SESSION =================
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> terminateSession(
@@ -73,9 +73,41 @@ public class AdminSessionController {
         );
 
         return ResponseEntity.ok(
+                ApiResponse.success("Session terminated successfully", null)
+        );
+    }
+
+    // ✅ Day 70 — Terminate ALL active sessions system-wide
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping
+    public ResponseEntity<?> terminateAllSessions(Authentication auth) {
+
+        // ✅ Count before terminating so we can report the number
+        long countBefore =
+                userSessionRepository.countByIsActiveTrue();
+
+        if (countBefore == 0) {
+            return ResponseEntity.ok(
+                    ApiResponse.success("No active sessions to terminate", 0)
+            );
+        }
+
+        int terminated =
+                userSessionRepository.deactivateAllActiveSessions();
+
+        auditLogService.log(
+                auth.getName(),
+                "ADMIN",
+                "ADMIN_TERMINATE_ALL_SESSIONS",
+                "SYSTEM",
+                "SUCCESS",
+                "Admin terminated all " + terminated + " active sessions system-wide"
+        );
+
+        return ResponseEntity.ok(
                 ApiResponse.success(
-                        "Session terminated successfully",
-                        null
+                        "All " + terminated + " active sessions have been terminated",
+                        terminated
                 )
         );
     }

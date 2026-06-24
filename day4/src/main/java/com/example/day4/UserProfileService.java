@@ -75,11 +75,48 @@ public class UserProfileService {
         );
     }
 
+    // ================= UPDATE EMAIL (Day 69) =================
+    public void updateEmail(String currentEmail, String newEmail, String confirmPassword) {
+
+        // ✅ Normalize email
+        String normalizedNew = newEmail.trim().toLowerCase();
+
+        // ✅ Cannot set to same email
+        if (normalizedNew.equals(currentEmail.toLowerCase())) {
+            throw new IllegalArgumentException(
+                    "New email is the same as your current email"
+            );
+        }
+
+        // ✅ Check email not already taken
+        if (userRepository.existsByEmail(normalizedNew)) {
+            throw new IllegalArgumentException(
+                    "This email address is already in use by another account"
+            );
+        }
+
+        User user = userRepository.findByEmail(currentEmail)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("User not found")
+                );
+
+        // ✅ Verify password before changing email
+        if (!passwordEncoder.matches(confirmPassword, user.getPassword())) {
+            throw new IllegalArgumentException(
+                    "Incorrect password. Email update cancelled."
+            );
+        }
+
+        user.setEmail(normalizedNew);
+        userRepository.save(user);
+
+        // ✅ Invalidate all sessions — JWT identity has changed
+        userSessionService.invalidateAllSessions(currentEmail);
+        userSessionService.invalidateAllSessions(normalizedNew);
+    }
+
     // ================= CHANGE PASSWORD =================
-    public void changePassword(
-            String email,
-            ChangePasswordRequest request
-    ) {
+    public void changePassword(String email, ChangePasswordRequest request) {
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
@@ -96,7 +133,6 @@ public class UserProfileService {
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
-
         userSessionService.invalidateAllSessions(email);
     }
 
@@ -170,7 +206,7 @@ public class UserProfileService {
         );
     }
 
-    // ================= MY ACTIVITY — Day 65: with action + status filters =================
+    // ================= MY ACTIVITY =================
     public Page<AuditLog> getMyActivity(
             String email,
             int page,
@@ -186,15 +222,12 @@ public class UserProfileService {
         String safeAction = action == null ? "" : action.trim();
         String safeStatus = status == null ? "" : status.trim();
 
-        // ✅ Use filtered query if any filter is active, unfiltered otherwise
         if (!safeAction.isEmpty() || !safeStatus.isEmpty()) {
             return auditLogRepository.findByActorEmailWithFilters(
                     email, safeAction, safeStatus, pageable
             );
         }
 
-        return auditLogRepository.findByActorEmailOrderByCreatedAtDesc(
-                email, pageable
-        );
+        return auditLogRepository.findByActorEmailOrderByCreatedAtDesc(email, pageable);
     }
 }

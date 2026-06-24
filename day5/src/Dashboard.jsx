@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiRequest, logout } from "./apiClient";
+import AlertBell from "./AlertBell"; // ✅ Day 77 — Import alert bell
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -18,9 +19,11 @@ function Dashboard() {
 
   const [loginAlert, setLoginAlert] = useState(null);
 
-  // ✅ Day 59 — Quick stats state
   const [quickStats, setQuickStats] = useState(null);
   const [activeSessions, setActiveSessions] = useState(null);
+
+  const [securityScore, setSecurityScore] = useState(null);
+  const [securityLoading, setSecurityLoading] = useState(false);
 
   const isAdmin = profile?.role === "ADMIN";
 
@@ -51,7 +54,7 @@ function Dashboard() {
     try {
       await apiRequest(`/auth/session/${id}`, { method: "DELETE" });
       setSessions((prev) =>
-        prev.map((s) => s.id === id ? { ...s, active: false } : s)
+        prev.map((s) => (s.id === id ? { ...s, active: false } : s))
       );
     } catch (err) {
       setMessage(err.message);
@@ -95,7 +98,6 @@ function Dashboard() {
     }
   };
 
-  // ✅ Day 59 — Fetch quick stats for admin panel
   const fetchQuickStats = async () => {
     try {
       const [analyticsData, sessionsData] = await Promise.all([
@@ -105,8 +107,19 @@ function Dashboard() {
       setQuickStats(analyticsData.data);
       setActiveSessions((sessionsData.data || []).length);
     } catch (err) {
-      // Non-critical — silently ignore if fails
       console.error("Quick stats error:", err.message);
+    }
+  };
+
+  const fetchSecurityScore = async () => {
+    setSecurityLoading(true);
+    try {
+      const data = await apiRequest("/security-audit/my-account", { method: "GET" });
+      setSecurityScore(data.data.metrics);
+    } catch (err) {
+      console.error("Security score error:", err.message);
+    } finally {
+      setSecurityLoading(false);
     }
   };
 
@@ -118,6 +131,7 @@ function Dashboard() {
   useEffect(() => {
     if (profile) {
       fetchUsers();
+      fetchSecurityScore();
       if (profile.role === "ADMIN") {
         fetchQuickStats();
       }
@@ -134,7 +148,10 @@ function Dashboard() {
           <p style={subText}>Manage users, sessions & security</p>
         </div>
 
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+          {/* ✅ Day 77 — Alert Bell */}
+          <AlertBell onClick={() => navigate("/security-alerts")} />
+
           <button style={{ ...btn, background: "#2563eb" }} onClick={() => navigate("/profile")}>
             My Profile
           </button>
@@ -143,9 +160,19 @@ function Dashboard() {
             My Activity
           </button>
 
+          <button style={{ ...btn, background: "#7c3aed" }} onClick={() => navigate("/security-audit")}>
+            Security Audit
+          </button>
+
           {isAdmin && (
-            <button style={{ ...btn, background: "#7c3aed" }} onClick={() => navigate("/users")}>
+            <button style={{ ...btn, background: "#0f766e" }} onClick={() => navigate("/users")}>
               Manage Users
+            </button>
+          )}
+
+          {isAdmin && (
+            <button style={{ ...btn, background: "#d97706" }} onClick={() => navigate("/risk-assessment")}>
+              Risk Assessment
             </button>
           )}
 
@@ -173,12 +200,65 @@ function Dashboard() {
             </button>
           )}
 
+          {/* ✅ Day 79 — Alert History Button */}
+          <button style={{ ...btn, background: "#6b7280" }} onClick={() => navigate("/security-alerts/history")}>
+            Alert History
+          </button>
+          <button type="button" onClick={() => navigate("/login-history")}>
+  📍 Login History
+</button>
           <button style={btn} onClick={handleLogout}>Logout</button>
           <button style={dangerBtn} onClick={handleLogoutAll}>Logout All</button>
         </div>
       </div>
 
-      {/* ===== DAY 59 — ADMIN QUICK STATS ===== */}
+      {/* ===== SECURITY SCORE WIDGET ===== */}
+      {!securityLoading && securityScore && (
+        <div style={{ ...securityScoreWidget, borderLeft: `4px solid ${securityScore.riskColor}` }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px", justifyContent: "space-between", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              <div
+                style={{
+                  width: "60px",
+                  height: "60px",
+                  borderRadius: "50%",
+                  background: securityScore.riskColor,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexDirection: "column",
+                }}
+              >
+                <div style={{ fontSize: "20px", fontWeight: "800", color: "white", lineHeight: "1" }}>
+                  {securityScore.riskScore}
+                </div>
+              </div>
+              <div>
+                <p style={{ margin: "0 0 4px", fontSize: "14px", fontWeight: "700", color: "#111827" }}>
+                  Your Security Score
+                </p>
+                <p style={{ margin: 0, fontSize: "12px", color: "#6b7280" }}>
+                  {securityScore.riskLevel === "SECURE"
+                    ? "✅ Your account is secure"
+                    : securityScore.riskLevel === "CAUTION"
+                    ? "⚠️ Review recommendations"
+                    : securityScore.riskLevel === "AT_RISK"
+                    ? "⚠️ Action recommended"
+                    : "🔴 Immediate action needed"}
+                </p>
+              </div>
+            </div>
+            <button
+              style={{ ...btn, background: securityScore.riskColor }}
+              onClick={() => navigate("/security-audit")}
+            >
+              View Details →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ===== ADMIN QUICK STATS ===== */}
       {isAdmin && quickStats && (
         <div style={quickStatsGrid}>
 
@@ -231,7 +311,7 @@ function Dashboard() {
         </div>
       )}
 
-      {/* ===== DAY 50 — SUSPICIOUS LOGIN BANNER ===== */}
+      {/* ===== SUSPICIOUS LOGIN BANNER ===== */}
       {loginAlert === "suspicious" && (
         <div style={suspiciousBanner}>
           <div style={{ flex: 1 }}>
@@ -255,7 +335,7 @@ function Dashboard() {
         </div>
       )}
 
-      {/* ===== DAY 50 — NEW DEVICE LOGIN BANNER ===== */}
+      {/* ===== NEW DEVICE LOGIN BANNER ===== */}
       {loginAlert === "newDevice" && (
         <div style={newDeviceBanner}>
           <div style={{ flex: 1 }}>
@@ -363,7 +443,6 @@ const input = { width: "100%", padding: "8px", marginBottom: "10px" };
 const errorText = { color: "red" };
 const inactiveText = { color: "gray", fontSize: "12px" };
 
-// ✅ Day 59 — Quick stats styles
 const quickStatsGrid = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
@@ -400,6 +479,15 @@ const statSub = {
   margin: 0,
   fontSize: "12px",
   color: "#9ca3af",
+};
+
+const securityScoreWidget = {
+  background: "#f9fafb",
+  border: "1px solid #e5e7eb",
+  borderRadius: "12px",
+  padding: "16px 20px",
+  marginBottom: "20px",
+  boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
 };
 
 const suspiciousBanner = { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", background: "#fee2e2", border: "1px solid #fca5a5", borderRadius: "12px", padding: "16px 20px", marginBottom: "20px" };

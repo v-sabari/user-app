@@ -25,20 +25,30 @@ function Profile() {
   const [editName, setEditName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
 
+  // Email update state
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [emailPassword, setEmailPassword] = useState("");
+  const [emailMessage, setEmailMessage] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [emailLoading, setEmailLoading] = useState(false);
+
   const [passwordForm, setPasswordForm] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
+    currentPassword: "", newPassword: "", confirmPassword: "",
   });
 
   const [securitySummary, setSecuritySummary] = useState(null);
+
+  // ✅ Day 73 — Login stats state
+  const [loginStats, setLoginStats] = useState(null);
+  const [loginStatsLoading, setLoginStatsLoading] = useState(true);
 
   const [profileMessage, setProfileMessage] = useState("");
   const [profileError, setProfileError] = useState("");
   const [passwordMessage, setPasswordMessage] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
-  // ✅ Day 64 — Delete account state
+  // Delete account state
   const [deleteConfirmPassword, setDeleteConfirmPassword] = useState("");
   const [deleteError, setDeleteError] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -47,10 +57,7 @@ function Profile() {
   const newPasswordStrength = getPasswordStrength(passwordForm.newPassword);
 
   // ================= LOGOUT =================
-  const handleLogout = () => {
-    logoutUser();
-    navigate("/login");
-  };
+  const handleLogout = () => { logoutUser(); navigate("/login"); };
 
   // ================= FETCH PROFILE =================
   const fetchProfile = async () => {
@@ -59,10 +66,7 @@ function Profile() {
       setProfile(data.data);
       setEditName(data.data.name);
     } catch (err) {
-      if (err.message === "Session expired") {
-        logoutUser();
-        navigate("/login");
-      }
+      if (err.message === "Session expired") { logoutUser(); navigate("/login"); }
     }
   };
 
@@ -76,16 +80,29 @@ function Profile() {
     }
   };
 
+  // ✅ Day 73 — FETCH LOGIN STATS =================
+  const fetchLoginStats = async () => {
+    setLoginStatsLoading(true);
+    try {
+      const data = await apiRequest("/profile/login-stats", { method: "GET" });
+      setLoginStats(data.data);
+    } catch (err) {
+      console.error("Login stats error:", err.message);
+    } finally {
+      setLoginStatsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchProfile();
     fetchSecuritySummary();
+    fetchLoginStats();
   }, []);
 
   // ================= UPDATE PROFILE =================
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     setProfileMessage(""); setProfileError("");
-
     try {
       const data = await apiRequest("/profile", {
         method: "PUT",
@@ -95,9 +112,32 @@ function Profile() {
       setProfile(data.data);
       setEditName(data.data.name);
       setIsEditing(false);
-      setProfileMessage("Profile updated successfully");
+      setProfileMessage("Name updated successfully");
     } catch (err) {
       setProfileError(err.message || "Failed to update profile");
+    }
+  };
+
+  // ================= UPDATE EMAIL =================
+  const handleUpdateEmail = async (e) => {
+    e.preventDefault();
+    setEmailMessage(""); setEmailError("");
+    if (!newEmail.trim() || !newEmail.includes("@")) { setEmailError("Please enter a valid email address"); return; }
+    if (newEmail.trim().toLowerCase() === profile.email.toLowerCase()) { setEmailError("New email is the same as your current email"); return; }
+    if (!emailPassword) { setEmailError("Please enter your current password to confirm"); return; }
+    setEmailLoading(true);
+    try {
+      await apiRequest("/profile/email", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newEmail: newEmail.trim().toLowerCase(), confirmPassword: emailPassword }),
+      });
+      setEmailMessage("Email updated successfully. Redirecting to login...");
+      setTimeout(() => { logoutUser(); navigate("/login"); }, 2000);
+    } catch (err) {
+      setEmailError(err.message || "Failed to update email");
+    } finally {
+      setEmailLoading(false);
     }
   };
 
@@ -105,52 +145,36 @@ function Profile() {
   const handleChangePassword = async (e) => {
     e.preventDefault();
     setPasswordMessage(""); setPasswordError("");
-
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setPasswordError("New password and confirm password do not match");
-      return;
+      setPasswordError("New password and confirm password do not match"); return;
     }
-
     try {
       await apiRequest("/profile/change-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(passwordForm),
       });
-
       setPasswordMessage("Password changed successfully. Redirecting to login...");
       setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-
       setTimeout(() => { logoutUser(); navigate("/login"); }, 2000);
-
     } catch (err) {
       setPasswordError(err.message || "Failed to change password");
     }
   };
 
-  // ================= DAY 64 — DELETE ACCOUNT =================
+  // ================= DELETE ACCOUNT =================
   const handleDeleteAccount = async (e) => {
     e.preventDefault();
     setDeleteError("");
-
-    if (!deleteConfirmPassword) {
-      setDeleteError("Please enter your password to confirm deletion");
-      return;
-    }
-
+    if (!deleteConfirmPassword) { setDeleteError("Please enter your password to confirm deletion"); return; }
     setDeleteLoading(true);
-
     try {
       await apiRequest("/profile/account", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ confirmPassword: deleteConfirmPassword }),
       });
-
-      // ✅ Clear all local storage and redirect to register
-      logoutUser();
-      navigate("/register");
-
+      logoutUser(); navigate("/register");
     } catch (err) {
       setDeleteError(err.message || "Failed to delete account");
     } finally {
@@ -171,9 +195,28 @@ function Profile() {
     return "#dcfce7";
   };
 
+  // ✅ Day 73 — Health status helpers
+  const getHealthColor = (status) => {
+    if (status === "AT_RISK") return "#dc2626";
+    if (status === "CAUTION") return "#d97706";
+    return "#16a34a";
+  };
+
+  const getHealthBg = (status) => {
+    if (status === "AT_RISK") return "#fee2e2";
+    if (status === "CAUTION") return "#fef3c7";
+    return "#dcfce7";
+  };
+
+  const getHealthIcon = (status) => {
+    if (status === "AT_RISK") return "🚨";
+    if (status === "CAUTION") return "⚠️";
+    return "✅";
+  };
+
   // ================= DATE FORMATTER =================
   const formatDateTime = (val) => {
-    if (!val) return "N/A";
+    if (!val) return "Never";
     if (Array.isArray(val)) {
       const [y, mo, d, h, min] = val;
       return `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")} ${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
@@ -192,7 +235,6 @@ function Profile() {
             <h2>My Profile</h2>
             <p className="welcome-text">Manage your account settings and security overview.</p>
           </div>
-
           <div className="inline-actions">
             <button type="button" onClick={() => navigate("/dashboard")}>Dashboard</button>
             <button type="button" onClick={() => navigate("/my-activity")}>My Activity</button>
@@ -203,7 +245,6 @@ function Profile() {
         {/* ===== PROFILE INFO SECTION ===== */}
         <div className="dashboard-section">
           <h3>Profile Information</h3>
-
           {profileMessage && <p className="message">{profileMessage}</p>}
           {profileError && <p className="error-message">{profileError}</p>}
 
@@ -215,20 +256,24 @@ function Profile() {
                 <p><strong>Role:</strong> {profile.role}</p>
                 <p>
                   <strong>Status:</strong>{" "}
-                  <span className={
-                    profile.status === "ACTIVE" ? "status-badge status-active"
-                    : profile.status === "LOCKED" ? "status-badge status-locked"
-                    : "status-badge status-inactive"
-                  }>
+                  <span className={profile.status === "ACTIVE" ? "status-badge status-active" : profile.status === "LOCKED" ? "status-badge status-locked" : "status-badge status-inactive"}>
                     {profile.status}
                   </span>
                 </p>
               </div>
-
-              <div style={{ marginTop: "16px" }}>
-                <button type="button" style={{ width: "auto", minWidth: "140px" }}
+              <div style={{ marginTop: "16px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                <button type="button" style={{ width: "auto", minWidth: "130px" }}
                   onClick={() => { setIsEditing(true); setProfileMessage(""); setProfileError(""); }}>
                   Edit Name
+                </button>
+                <button type="button" style={{ width: "auto", minWidth: "130px", background: "#0891b2" }}
+                  onClick={() => { setIsEditingEmail(true); setNewEmail(""); setEmailPassword(""); setEmailMessage(""); setEmailError(""); }}>
+                  Edit Email
+                </button>
+                {/* ✅ Day 81 — 2FA Setup Button */}
+                <button type="button" style={{ width: "auto", minWidth: "130px", background: "#7c3aed" }}
+                  onClick={() => navigate("/2fa-setup")}>
+                  🔐 Setup 2FA
                 </button>
               </div>
             </>
@@ -239,67 +284,144 @@ function Profile() {
               <input type="text" placeholder="Enter new name" value={editName}
                 onChange={(e) => setEditName(e.target.value)} minLength={2} maxLength={50} required />
               <div className="inline-actions" style={{ marginTop: "10px" }}>
-                <button type="submit">Save Changes</button>
-                <button type="button" onClick={() => { setIsEditing(false); setEditName(profile.name); setProfileError(""); }}>
-                  Cancel
-                </button>
+                <button type="submit">Save Name</button>
+                <button type="button" onClick={() => { setIsEditing(false); setEditName(profile.name); setProfileError(""); }}>Cancel</button>
               </div>
             </form>
+          )}
+        </div>
+
+        {/* ===== UPDATE EMAIL SECTION ===== */}
+        {isEditingEmail && (
+          <div className="dashboard-section" style={{ border: "1px solid #bae6fd", borderRadius: "12px", background: "#f0f9ff", padding: "20px" }}>
+            <h3 style={{ margin: "0 0 8px", color: "#0369a1" }}>✉️ Update Email Address</h3>
+            <p style={{ color: "#0c4a6e", fontSize: "13px", marginBottom: "16px", lineHeight: "1.6" }}>
+              After updating your email, all sessions will be invalidated. Use your <strong>new email</strong> to sign back in.
+            </p>
+            {emailMessage && <div style={{ padding: "12px", borderRadius: "8px", background: "#dcfce7", color: "#15803d", border: "1px solid #86efac", fontSize: "14px", marginBottom: "14px" }}>✅ {emailMessage}</div>}
+            {emailError && <div style={{ padding: "12px", borderRadius: "8px", background: "#fee2e2", color: "#b91c1c", border: "1px solid #fca5a5", fontSize: "14px", marginBottom: "14px" }}>❌ {emailError}</div>}
+            <form onSubmit={handleUpdateEmail}>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "5px" }}>Current Email</label>
+              <input type="email" value={profile?.email || ""} disabled style={{ background: "#f3f4f6", color: "#6b7280", cursor: "not-allowed" }} />
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "5px", marginTop: "4px" }}>New Email Address</label>
+              <input type="email" placeholder="Enter new email address" value={newEmail}
+                onChange={(e) => { setNewEmail(e.target.value); setEmailError(""); }} required autoFocus />
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "5px", marginTop: "4px" }}>Confirm with Password</label>
+              <input type="password" placeholder="Enter current password to confirm"
+                value={emailPassword} onChange={(e) => { setEmailPassword(e.target.value); setEmailError(""); }} required />
+              <div className="inline-actions" style={{ marginTop: "10px" }}>
+                <button type="submit" disabled={emailLoading} style={{ width: "auto", minWidth: "160px", background: emailLoading ? "#9ca3af" : "#0891b2" }}>
+                  {emailLoading ? "Updating..." : "Update Email"}
+                </button>
+                <button type="button" onClick={() => { setIsEditingEmail(false); setEmailError(""); setEmailMessage(""); }} style={{ width: "auto", background: "#6b7280" }}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* ===== DAY 73 — LOGIN STATISTICS SECTION ===== */}
+        <div className="dashboard-section">
+          <h3>🔐 Login Statistics</h3>
+          <p className="welcome-text" style={{ marginBottom: "16px" }}>
+            Your personal account security metrics.
+          </p>
+
+          {loginStatsLoading ? (
+            <p style={{ color: "#9ca3af", fontSize: "13px" }}>Loading login statistics...</p>
+          ) : !loginStats ? (
+            <p style={{ color: "#9ca3af", fontSize: "13px" }}>Could not load stats.</p>
+          ) : (
+            <>
+              {/* ✅ Health status banner */}
+              <div style={{
+                display: "flex", alignItems: "center", gap: "12px",
+                padding: "12px 16px", borderRadius: "10px",
+                background: getHealthBg(loginStats.healthStatus),
+                border: `1px solid ${getHealthColor(loginStats.healthStatus)}30`,
+                marginBottom: "16px",
+              }}>
+                <span style={{ fontSize: "20px" }}>{getHealthIcon(loginStats.healthStatus)}</span>
+                <div>
+                  <p style={{ margin: 0, fontWeight: "700", color: getHealthColor(loginStats.healthStatus), fontSize: "14px" }}>
+                    Account Security: {loginStats.healthStatus === "AT_RISK" ? "At Risk" : loginStats.healthStatus === "CAUTION" ? "Needs Attention" : "Healthy"}
+                  </p>
+                  <p style={{ margin: 0, fontSize: "12px", color: "#6b7280" }}>
+                    {loginStats.healthStatus === "AT_RISK"
+                      ? "High number of failed logins detected. Consider changing your password."
+                      : loginStats.healthStatus === "CAUTION"
+                      ? "Some failed login attempts detected in the last 7 days."
+                      : "No suspicious activity detected on your account."}
+                  </p>
+                </div>
+              </div>
+
+              {/* ✅ 4 stat cards */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "12px" }}>
+
+                <div style={{ background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: "12px", padding: "14px", borderTop: "3px solid #2563eb" }}>
+                  <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "#6b7280", textTransform: "uppercase" }}>Total Logins</p>
+                  <p style={{ margin: 0, fontSize: "26px", fontWeight: "800", color: "#2563eb" }}>{loginStats.totalLogins ?? 0}</p>
+                  <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#9ca3af" }}>successful all time</p>
+                </div>
+
+                <div style={{ background: loginStats.recentFailedLogins > 0 ? "#fff1f2" : "#f0fdf4", border: `1px solid ${loginStats.recentFailedLogins > 0 ? "#fecaca" : "#bbf7d0"}`, borderRadius: "12px", padding: "14px", borderTop: `3px solid ${loginStats.recentFailedLogins > 0 ? "#dc2626" : "#16a34a"}` }}>
+                  <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "#6b7280", textTransform: "uppercase" }}>Failed (7 days)</p>
+                  <p style={{ margin: 0, fontSize: "26px", fontWeight: "800", color: loginStats.recentFailedLogins > 0 ? "#dc2626" : "#16a34a" }}>
+                    {loginStats.recentFailedLogins ?? 0}
+                  </p>
+                  <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#9ca3af" }}>
+                    {loginStats.recentFailedLogins === 0 ? "✅ none detected" : "failed attempts"}
+                  </p>
+                </div>
+
+                <div style={{ background: "#faf5ff", border: "1px solid #ddd6fe", borderRadius: "12px", padding: "14px", borderTop: "3px solid #7c3aed" }}>
+                  <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "#6b7280", textTransform: "uppercase" }}>Total Actions</p>
+                  <p style={{ margin: 0, fontSize: "26px", fontWeight: "800", color: "#7c3aed" }}>{loginStats.totalActions ?? 0}</p>
+                  <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#9ca3af" }}>audit log entries</p>
+                </div>
+
+                <div style={{ background: "#f0fdfa", border: "1px solid #99f6e4", borderRadius: "12px", padding: "14px", borderTop: "3px solid #0891b2" }}>
+                  <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "#6b7280", textTransform: "uppercase" }}>Last Login</p>
+                  <p style={{ margin: 0, fontSize: "13px", fontWeight: "700", color: "#0891b2", lineHeight: "1.4" }}>
+                    {loginStats.lastLoginAt ? formatDateTime(loginStats.lastLoginAt) : "Never"}
+                  </p>
+                </div>
+
+              </div>
+            </>
           )}
         </div>
 
         {/* ===== CHANGE PASSWORD SECTION ===== */}
         <div className="dashboard-section">
           <h3>Change Password</h3>
-
           <p className="welcome-text" style={{ marginBottom: "12px" }}>
             After changing your password, all sessions will be invalidated and you will be redirected to login.
           </p>
-
           {passwordMessage && <p className="message">{passwordMessage}</p>}
           {passwordError && <p className="error-message">{passwordError}</p>}
-
           <form onSubmit={handleChangePassword}>
-            <input type="password" placeholder="Current password"
-              value={passwordForm.currentPassword}
-              onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-              required />
-
-            <input type="password" placeholder="New password (min 6 characters)"
-              value={passwordForm.newPassword}
-              onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-              required minLength={6} />
-
-            {/* ===== PASSWORD STRENGTH INDICATOR ===== */}
+            <input type="password" placeholder="Current password" value={passwordForm.currentPassword}
+              onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })} required />
+            <input type="password" placeholder="New password (min 6 characters)" value={passwordForm.newPassword}
+              onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })} required minLength={6} />
             {passwordForm.newPassword.length > 0 && (
               <div style={{ marginTop: "-8px", marginBottom: "12px" }}>
                 <div style={{ display: "flex", gap: "4px", marginBottom: "5px" }}>
                   {[1, 2, 3, 4].map((level) => (
-                    <div key={level} style={{
-                      flex: 1, height: "4px", borderRadius: "999px",
-                      background: newPasswordStrength.score >= level ? newPasswordStrength.color : "#e5e7eb",
-                      transition: "background 0.3s ease",
-                    }} />
+                    <div key={level} style={{ flex: 1, height: "4px", borderRadius: "999px", background: newPasswordStrength.score >= level ? newPasswordStrength.color : "#e5e7eb", transition: "background 0.3s ease" }} />
                   ))}
                 </div>
-                <p style={{ margin: 0, fontSize: "12px", fontWeight: "600", color: newPasswordStrength.color }}>
-                  {newPasswordStrength.label} password
-                </p>
+                <p style={{ margin: 0, fontSize: "12px", fontWeight: "600", color: newPasswordStrength.color }}>{newPasswordStrength.label} password</p>
               </div>
             )}
-
-            <input type="password" placeholder="Confirm new password"
-              value={passwordForm.confirmPassword}
-              onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-              required minLength={6} />
-
+            <input type="password" placeholder="Confirm new password" value={passwordForm.confirmPassword}
+              onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} required minLength={6} />
             {passwordForm.confirmPassword.length > 0 && (
-              <p style={{ margin: "-8px 0 12px", fontSize: "12px", fontWeight: "600",
-                color: passwordForm.newPassword === passwordForm.confirmPassword ? "#16a34a" : "#dc2626" }}>
+              <p style={{ margin: "-8px 0 12px", fontSize: "12px", fontWeight: "600", color: passwordForm.newPassword === passwordForm.confirmPassword ? "#16a34a" : "#dc2626" }}>
                 {passwordForm.newPassword === passwordForm.confirmPassword ? "✅ Passwords match" : "❌ Passwords do not match"}
               </p>
             )}
-
             <button type="submit">Change Password</button>
           </form>
         </div>
@@ -307,51 +429,32 @@ function Profile() {
         {/* ===== SECURITY SUMMARY SECTION ===== */}
         <div className="dashboard-section">
           <h3>Security Summary</h3>
-
           {!securitySummary ? (
             <p>Loading security summary...</p>
           ) : (
             <>
               <div className="analytics-grid">
-                <div className="analytics-card">
-                  <p>Total Sessions</p>
-                  <h3>{securitySummary.totalSessions}</h3>
-                </div>
-                <div className="analytics-card">
-                  <p>Active Sessions</p>
-                  <h3>{securitySummary.activeSessions}</h3>
-                </div>
+                <div className="analytics-card"><p>Total Sessions</p><h3>{securitySummary.totalSessions}</h3></div>
+                <div className="analytics-card"><p>Active Sessions</p><h3>{securitySummary.activeSessions}</h3></div>
                 <div className="analytics-card">
                   <p>Suspicious Sessions</p>
-                  <h3 style={{ color: securitySummary.suspiciousSessions > 0 ? "#dc2626" : "#111827" }}>
-                    {securitySummary.suspiciousSessions}
-                  </h3>
+                  <h3 style={{ color: securitySummary.suspiciousSessions > 0 ? "#dc2626" : "#111827" }}>{securitySummary.suspiciousSessions}</h3>
                 </div>
                 <div className="analytics-card">
                   <p>Risk Level</p>
                   <h3>
-                    <span style={{
-                      display: "inline-block", padding: "4px 14px", borderRadius: "999px",
-                      fontSize: "16px", fontWeight: "700",
-                      background: getRiskBg(securitySummary.riskLevel),
-                      color: getRiskColor(securitySummary.riskLevel),
-                    }}>
+                    <span style={{ display: "inline-block", padding: "4px 14px", borderRadius: "999px", fontSize: "16px", fontWeight: "700", background: getRiskBg(securitySummary.riskLevel), color: getRiskColor(securitySummary.riskLevel) }}>
                       {securitySummary.riskLevel}
                     </span>
                   </h3>
                 </div>
               </div>
-
               <div className="user-list">
                 <div className="user-card">
                   <p><strong>Devices Used</strong></p>
-                  {securitySummary.devicesUsed && securitySummary.devicesUsed.length > 0 ? (
-                    securitySummary.devicesUsed.map((device, i) => (
-                      <p key={i} style={{ color: "#4b5563" }}>{device}</p>
-                    ))
-                  ) : (
-                    <p style={{ color: "#9ca3af" }}>No device data</p>
-                  )}
+                  {securitySummary.devicesUsed?.length > 0
+                    ? securitySummary.devicesUsed.map((device, i) => <p key={i} style={{ color: "#4b5563" }}>{device}</p>)
+                    : <p style={{ color: "#9ca3af" }}>No device data</p>}
                 </div>
                 <div className="user-card">
                   <p><strong>Last Login</strong></p>
@@ -359,101 +462,43 @@ function Profile() {
                 </div>
                 <div className="user-card">
                   <p><strong>Recent Actions</strong></p>
-                  {securitySummary.recentActions && securitySummary.recentActions.length > 0 ? (
-                    securitySummary.recentActions.map((action, i) => (
-                      <p key={i} style={{ color: "#4b5563" }}>{action}</p>
-                    ))
-                  ) : (
-                    <p style={{ color: "#9ca3af" }}>No recent actions</p>
-                  )}
+                  {securitySummary.recentActions?.length > 0
+                    ? securitySummary.recentActions.map((action, i) => <p key={i} style={{ color: "#4b5563" }}>{action}</p>)
+                    : <p style={{ color: "#9ca3af" }}>No recent actions</p>}
                 </div>
               </div>
             </>
           )}
         </div>
 
-        {/* ===== DAY 64 — DELETE ACCOUNT DANGER ZONE ===== */}
-        <div
-          className="dashboard-section"
-          style={{
-            border: "1px solid #fecaca",
-            borderRadius: "12px",
-            background: "#fff1f2",
-            padding: "20px",
-            marginTop: "8px",
-          }}
-        >
+        {/* ===== DANGER ZONE ===== */}
+        <div className="dashboard-section" style={{ border: "1px solid #fecaca", borderRadius: "12px", background: "#fff1f2", padding: "20px", marginTop: "8px" }}>
           <h3 style={{ color: "#dc2626", margin: "0 0 8px" }}>⚠️ Danger Zone</h3>
-
           <p style={{ color: "#6b7280", fontSize: "14px", marginBottom: "16px", lineHeight: "1.6" }}>
-            Permanently delete your account and all associated data. This action
-            <strong> cannot be undone</strong>. All your active sessions will be
-            immediately terminated.
+            Permanently delete your account and all associated data. This action <strong>cannot be undone</strong>.
           </p>
-
           {!showDeleteConfirm ? (
-            <button
-              type="button"
+            <button type="button"
               onClick={() => { setShowDeleteConfirm(true); setDeleteError(""); setDeleteConfirmPassword(""); }}
-              style={{
-                width: "auto",
-                minWidth: "180px",
-                background: "transparent",
-                color: "#dc2626",
-                border: "2px solid #dc2626",
-                borderRadius: "8px",
-                padding: "8px 16px",
-                cursor: "pointer",
-                fontWeight: "600",
-                fontSize: "14px",
-              }}
-            >
+              style={{ width: "auto", minWidth: "180px", background: "transparent", color: "#dc2626", border: "2px solid #dc2626", borderRadius: "8px", padding: "8px 16px", cursor: "pointer", fontWeight: "600", fontSize: "14px" }}>
               Delete My Account
             </button>
           ) : (
             <form onSubmit={handleDeleteAccount}>
-              <p style={{ fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "8px" }}>
-                Enter your current password to confirm:
-              </p>
-
-              <input
-                type="password"
-                placeholder="Enter your password to confirm"
+              <p style={{ fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "8px" }}>Enter your current password to confirm:</p>
+              <input type="password" placeholder="Enter your password to confirm"
                 value={deleteConfirmPassword}
-                onChange={(e) => {
-                  setDeleteConfirmPassword(e.target.value);
-                  setDeleteError("");
-                }}
-                required
-                autoFocus
-                style={{ borderColor: deleteError ? "#dc2626" : undefined }}
-              />
-
-              {deleteError && (
-                <p style={{ margin: "-8px 0 12px", fontSize: "13px", color: "#dc2626", fontWeight: "600" }}>
-                  ❌ {deleteError}
-                </p>
-              )}
-
+                onChange={(e) => { setDeleteConfirmPassword(e.target.value); setDeleteError(""); }}
+                required autoFocus />
+              {deleteError && <p style={{ margin: "-8px 0 12px", fontSize: "13px", color: "#dc2626", fontWeight: "600" }}>❌ {deleteError}</p>}
               <div className="inline-actions" style={{ marginTop: "4px" }}>
-                <button
-                  type="submit"
-                  disabled={deleteLoading}
-                  style={{
-                    width: "auto",
-                    minWidth: "180px",
-                    marginTop: 0,
-                    background: deleteLoading ? "#9ca3af" : "#dc2626",
-                  }}
-                >
+                <button type="submit" disabled={deleteLoading}
+                  style={{ width: "auto", minWidth: "180px", marginTop: 0, background: deleteLoading ? "#9ca3af" : "#dc2626" }}>
                   {deleteLoading ? "Deleting..." : "Confirm Delete Account"}
                 </button>
-
-                <button
-                  type="button"
+                <button type="button"
                   onClick={() => { setShowDeleteConfirm(false); setDeleteError(""); setDeleteConfirmPassword(""); }}
-                  style={{ width: "auto", marginTop: 0, background: "#6b7280" }}
-                >
+                  style={{ width: "auto", marginTop: 0, background: "#6b7280" }}>
                   Cancel
                 </button>
               </div>

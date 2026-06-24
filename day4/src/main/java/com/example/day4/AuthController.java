@@ -25,6 +25,8 @@ public class AuthController {
     private final UserSessionService sessionService;
     private final UserService userService;
     private final AuditLogRepository auditLogRepository;
+    // ✅ Day 82 — Login History Service injection
+    private final LoginHistoryService loginHistoryService;
 
     public AuthController(
             UserRepository repo,
@@ -33,7 +35,9 @@ public class AuthController {
             AuditLogService auditLogService,
             UserSessionService sessionService,
             UserService userService,
-            AuditLogRepository auditLogRepository
+            AuditLogRepository auditLogRepository,
+            // ✅ Day 82 — Added to constructor
+            LoginHistoryService loginHistoryService
     ) {
         this.repo = repo;
         this.passwordEncoder = passwordEncoder;
@@ -42,6 +46,8 @@ public class AuthController {
         this.sessionService = sessionService;
         this.userService = userService;
         this.auditLogRepository = auditLogRepository;
+        // ✅ Day 82
+        this.loginHistoryService = loginHistoryService;
     }
 
     // ================= REGISTER =================
@@ -92,6 +98,13 @@ public class AuthController {
             HttpServletRequest httpRequest
     ) {
 
+        // ✅ Day 82 — Extract device info early (needed for both success/failure logging)
+        String ipAddressForHistory = httpRequest.getRemoteAddr();
+        String userAgentForHistory = httpRequest.getHeader("User-Agent");
+        String browserForHistory = loginHistoryService.extractBrowser(userAgentForHistory);
+        String osForHistory = loginHistoryService.extractOperatingSystem(userAgentForHistory);
+        String deviceTypeForHistory = loginHistoryService.extractDeviceType(userAgentForHistory);
+
         Optional<User> optionalUser =
                 repo.findByEmail(
                         request.getEmail().toLowerCase()
@@ -108,6 +121,22 @@ public class AuthController {
                     "FAILED",
                     "Invalid email or password"
             );
+
+            // ✅ Day 82 — Log failed login (user not found)
+            try {
+                loginHistoryService.logLogin(
+                        request.getEmail().toLowerCase(),
+                        ipAddressForHistory,
+                        userAgentForHistory,
+                        deviceTypeForHistory,
+                        browserForHistory,
+                        osForHistory,
+                        "FAILED",
+                        "Invalid email or password"
+                );
+            } catch (Exception e) {
+                System.err.println("Failed to log login history: " + e.getMessage());
+            }
 
             return ResponseEntity.badRequest()
                     .body(
@@ -131,6 +160,22 @@ public class AuthController {
                     "Login attempt on locked account"
             );
 
+            // ✅ Day 82 — Log failed login (account locked)
+            try {
+                loginHistoryService.logLogin(
+                        user.getEmail(),
+                        ipAddressForHistory,
+                        userAgentForHistory,
+                        deviceTypeForHistory,
+                        browserForHistory,
+                        osForHistory,
+                        "FAILED",
+                        "Account locked due to multiple failed login attempts"
+                );
+            } catch (Exception e) {
+                System.err.println("Failed to log login history: " + e.getMessage());
+            }
+
             return ResponseEntity.status(HttpStatus.LOCKED)
                     .body(
                             ErrorResponse.of(
@@ -150,6 +195,22 @@ public class AuthController {
                     "FAILED",
                     "Inactive account login attempt"
             );
+
+            // ✅ Day 82 — Log failed login (account inactive)
+            try {
+                loginHistoryService.logLogin(
+                        user.getEmail(),
+                        ipAddressForHistory,
+                        userAgentForHistory,
+                        deviceTypeForHistory,
+                        browserForHistory,
+                        osForHistory,
+                        "FAILED",
+                        "Account is inactive"
+                );
+            } catch (Exception e) {
+                System.err.println("Failed to log login history: " + e.getMessage());
+            }
 
             return ResponseEntity.badRequest()
                     .body(
@@ -177,6 +238,22 @@ public class AuthController {
                     "FAILED",
                     "Invalid email or password"
             );
+
+            // ✅ Day 82 — Log failed login (wrong password)
+            try {
+                loginHistoryService.logLogin(
+                        user.getEmail(),
+                        ipAddressForHistory,
+                        userAgentForHistory,
+                        deviceTypeForHistory,
+                        browserForHistory,
+                        osForHistory,
+                        "FAILED",
+                        "Invalid email or password"
+                );
+            } catch (Exception e) {
+                System.err.println("Failed to log login history: " + e.getMessage());
+            }
 
             // ================= FAILED LOGIN COUNT =================
             long failedAttempts =
@@ -305,6 +382,29 @@ public class AuthController {
         session.setLoginType(loginType);
 
         sessionService.save(session);
+
+        // ✅ Day 82 — Log successful login + detect suspicious patterns
+        try {
+            LoginHistory loginHistory = loginHistoryService.logLogin(
+                    user.getEmail(),
+                    ipAddressForHistory,
+                    userAgentForHistory,
+                    deviceTypeForHistory,
+                    browserForHistory,
+                    osForHistory,
+                    "SUCCESS",
+                    null
+            );
+
+            // Check previous logins to detect suspicious activity
+            List<LoginHistory> previousLogins =
+                    loginHistoryService.getRecentLogins(user.getEmail(), 5);
+
+            loginHistoryService.detectSuspiciousLogin(loginHistory, previousLogins);
+
+        } catch (Exception e) {
+            System.err.println("Failed to log login history: " + e.getMessage());
+        }
 
         // ================= AUDIT LOGS =================
         if (isSuspicious) {
@@ -497,6 +597,13 @@ public class AuthController {
 
         auditLogService.logLogout(email, role);
 
+        // ✅ Day 82 — Log logout time in login history
+        try {
+            loginHistoryService.logLogout(email);
+        } catch (Exception e) {
+            System.err.println("Failed to log logout history: " + e.getMessage());
+        }
+
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Logout successful",
@@ -652,6 +759,13 @@ public class AuthController {
                 "SUCCESS",
                 "All sessions terminated by user"
         );
+
+        // ✅ Day 82 — Log logout time in login history
+        try {
+            loginHistoryService.logLogout(email);
+        } catch (Exception e) {
+            System.err.println("Failed to log logout history: " + e.getMessage());
+        }
 
         return ResponseEntity.ok(
                 ApiResponse.success(

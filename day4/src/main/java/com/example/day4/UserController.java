@@ -12,7 +12,9 @@ import org.springframework.http.MediaType;
 
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -55,25 +57,16 @@ public class UserController {
             @RequestParam(defaultValue = "name") String sortBy,
             @RequestParam(defaultValue = "asc") String direction
     ) {
-
         Sort sort = direction.equalsIgnoreCase("desc")
-                ? Sort.by(sortBy).descending()
-                : Sort.by(sortBy).ascending();
-
+                ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
         Pageable pageable = PageRequest.of(page, size, sort);
-
         String safeSearch = search == null ? "" : search.trim();
         String safeRole = role == null ? "" : role.trim();
         String safeStatus = status == null ? "" : status.trim();
-
         Page<User> usersPage =
                 repo.findByNameContainingIgnoreCaseAndRoleContainingIgnoreCaseAndStatusContainingIgnoreCase(
-                        safeSearch, safeRole, safeStatus, pageable
-                );
-
-        return ResponseEntity.ok(
-                ApiResponse.success("Users fetched successfully", usersPage)
-        );
+                        safeSearch, safeRole, safeStatus, pageable);
+        return ResponseEntity.ok(ApiResponse.success("Users fetched successfully", usersPage));
     }
 
     // ================= EXPORT USERS CSV =================
@@ -87,24 +80,17 @@ public class UserController {
             @RequestParam(defaultValue = "asc") String direction,
             Authentication auth
     ) {
-
         Sort sort = direction.equalsIgnoreCase("desc")
-                ? Sort.by(sortBy).descending()
-                : Sort.by(sortBy).ascending();
-
+                ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
         String safeSearch = search == null ? "" : search.trim();
         String safeRole = role == null ? "" : role.trim();
         String safeStatus = status == null ? "" : status.trim();
-
         List<User> users =
                 repo.findByNameContainingIgnoreCaseAndRoleContainingIgnoreCaseAndStatusContainingIgnoreCase(
                         safeSearch, safeRole, safeStatus,
-                        PageRequest.of(0, Integer.MAX_VALUE, sort)
-                ).getContent();
-
+                        PageRequest.of(0, Integer.MAX_VALUE, sort)).getContent();
         StringBuilder csv = new StringBuilder();
         csv.append("ID,Name,Email,Role,Status\n");
-
         for (User user : users) {
             csv.append(user.getId()).append(",");
             csv.append("\"").append(user.getName().replace("\"", "\"\"")).append("\",");
@@ -112,10 +98,8 @@ public class UserController {
             csv.append(user.getRole()).append(",");
             csv.append(user.getStatus()).append("\n");
         }
-
         auditLogService.log(auth.getName(), "ADMIN", "EXPORT_USERS_CSV",
                 "SYSTEM", "SUCCESS", "Exported " + users.size() + " users as CSV");
-
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=users-export.csv")
                 .contentType(new MediaType("text", "csv"))
@@ -126,13 +110,8 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<?> getUserById(@PathVariable Long id) {
-
         User user = repo.findById(id).orElse(null);
-
-        if (user == null) {
-            return ResponseEntity.badRequest().body(ErrorResponse.of("User not found"));
-        }
-
+        if (user == null) return ResponseEntity.badRequest().body(ErrorResponse.of("User not found"));
         return ResponseEntity.ok(ApiResponse.success("User fetched successfully", user));
     }
 
@@ -140,68 +119,77 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}/history")
     public ResponseEntity<?> getUserHistory(@PathVariable Long id) {
-
         User user = repo.findById(id).orElse(null);
-
-        if (user == null) {
-            return ResponseEntity.badRequest().body(ErrorResponse.of("User not found"));
-        }
-
+        if (user == null) return ResponseEntity.badRequest().body(ErrorResponse.of("User not found"));
         List<AuditLog> history =
                 auditLogRepository.findByTargetEmailOrderByCreatedAtDesc(user.getEmail());
-
         return ResponseEntity.ok(ApiResponse.success("User history fetched successfully", history));
+    }
+
+    // ================= DAY 72 — GET USER LOGIN STATS =================
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/{id}/login-stats")
+    public ResponseEntity<?> getUserLoginStats(@PathVariable Long id) {
+
+        User user = repo.findById(id).orElse(null);
+        if (user == null) return ResponseEntity.badRequest().body(ErrorResponse.of("User not found"));
+
+        String email = user.getEmail();
+
+        // ✅ Total successful logins
+        long totalLogins = auditLogRepository.countSuccessfulLoginsByEmail(email);
+
+        // ✅ Failed logins in last 7 days
+        LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
+        long recentFailedLogins = auditLogRepository.countRecentFailedLogins(email, sevenDaysAgo);
+
+        // ✅ Total actions ever performed by this user
+        long totalActions = auditLogRepository.countByActorEmail(email);
+
+        // ✅ Last successful login timestamp
+        List<AuditLog> recentLogins = auditLogRepository.findRecentSuccessfulLogins(
+                email, PageRequest.of(0, 1)
+        );
+        Object lastLoginAt = recentLogins.isEmpty() ? null : recentLogins.get(0).getCreatedAt();
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalLogins", totalLogins);
+        stats.put("recentFailedLogins", recentFailedLogins);
+        stats.put("totalActions", totalActions);
+        stats.put("lastLoginAt", lastLoginAt);
+
+        return ResponseEntity.ok(ApiResponse.success("Login stats fetched", stats));
     }
 
     // ================= ADD USER =================
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<?> addUser(@Valid @RequestBody User user, Authentication auth) {
-
-        if (repo.existsByEmail(user.getEmail())) {
+        if (repo.existsByEmail(user.getEmail()))
             return ResponseEntity.badRequest().body(ErrorResponse.of("Email already exists"));
-        }
-
         user.setEmail(user.getEmail().toLowerCase());
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-
         if (user.getRole() == null || user.getRole().isBlank()) user.setRole("USER");
         if (user.getStatus() == null || user.getStatus().isBlank()) user.setStatus("ACTIVE");
-
         User saved = repo.save(user);
-
         auditLogService.log(auth.getName(), "ADMIN", "ADD_USER",
                 saved.getEmail(), "SUCCESS", "User added successfully");
-
         return ResponseEntity.ok(ApiResponse.success("User added successfully", saved));
     }
 
     // ================= UPDATE USER =================
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateUser(
-            @PathVariable Long id,
-            @Valid @RequestBody User user,
-            Authentication auth
-    ) {
-
+    public ResponseEntity<?> updateUser(@PathVariable Long id, @Valid @RequestBody User user, Authentication auth) {
         User existing = repo.findById(id).orElse(null);
-
-        if (existing == null) {
-            return ResponseEntity.badRequest().body(ErrorResponse.of("User not found"));
-        }
-
+        if (existing == null) return ResponseEntity.badRequest().body(ErrorResponse.of("User not found"));
         existing.setName(user.getName());
         existing.setEmail(user.getEmail().toLowerCase());
-
         if (user.getRole() != null) existing.setRole(user.getRole());
         if (user.getStatus() != null) existing.setStatus(user.getStatus());
-
         User updated = repo.save(existing);
-
         auditLogService.log(auth.getName(), "ADMIN", "UPDATE_USER",
                 updated.getEmail(), "SUCCESS", "User updated successfully");
-
         return ResponseEntity.ok(ApiResponse.success("User updated successfully", updated));
     }
 
@@ -209,72 +197,40 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/activate")
     public ResponseEntity<?> activate(@PathVariable Long id, Authentication auth) {
-
         User user = repo.findById(id).orElse(null);
         if (user == null) return ResponseEntity.badRequest().body(ErrorResponse.of("User not found"));
-
-        user.setStatus("ACTIVE");
-        repo.save(user);
+        user.setStatus("ACTIVE"); repo.save(user);
         auditLogService.log(auth.getName(), "ADMIN", "ACTIVATE_USER", user.getEmail(), "SUCCESS", "User activated");
-
         return ResponseEntity.ok(ApiResponse.success("User activated successfully", user));
     }
 
-    // ================= DEACTIVATE (Day 63 — accepts optional reason) =================
+    // ================= DEACTIVATE =================
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/deactivate")
-    public ResponseEntity<?> deactivate(
-            @PathVariable Long id,
-            @RequestBody(required = false) Map<String, String> body,
-            Authentication auth
-    ) {
-
+    public ResponseEntity<?> deactivate(@PathVariable Long id,
+                                        @RequestBody(required = false) Map<String, String> body, Authentication auth) {
         User user = repo.findById(id).orElse(null);
         if (user == null) return ResponseEntity.badRequest().body(ErrorResponse.of("User not found"));
-
-        user.setStatus("INACTIVE");
-        repo.save(user);
-
-        // ✅ Day 63 — Include reason in audit log details if provided
+        user.setStatus("INACTIVE"); repo.save(user);
         String reason = (body != null && body.get("reason") != null && !body.get("reason").isBlank())
-                ? body.get("reason").trim()
-                : null;
-
-        String details = reason != null
-                ? "User deactivated. Reason: " + reason
-                : "User deactivated";
-
+                ? body.get("reason").trim() : null;
+        String details = reason != null ? "User deactivated. Reason: " + reason : "User deactivated";
         auditLogService.log(auth.getName(), "ADMIN", "DEACTIVATE_USER", user.getEmail(), "SUCCESS", details);
-
         return ResponseEntity.ok(ApiResponse.success("User deactivated successfully", user));
     }
 
-    // ================= LOCK (Day 63 — accepts optional reason) =================
+    // ================= LOCK =================
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/lock")
-    public ResponseEntity<?> lock(
-            @PathVariable Long id,
-            @RequestBody(required = false) Map<String, String> body,
-            Authentication auth
-    ) {
-
+    public ResponseEntity<?> lock(@PathVariable Long id,
+                                  @RequestBody(required = false) Map<String, String> body, Authentication auth) {
         User user = repo.findById(id).orElse(null);
         if (user == null) return ResponseEntity.badRequest().body(ErrorResponse.of("User not found"));
-
-        user.setStatus("LOCKED");
-        repo.save(user);
-
-        // ✅ Day 63 — Include reason in audit log details if provided
+        user.setStatus("LOCKED"); repo.save(user);
         String reason = (body != null && body.get("reason") != null && !body.get("reason").isBlank())
-                ? body.get("reason").trim()
-                : null;
-
-        String details = reason != null
-                ? "User locked. Reason: " + reason
-                : "User locked";
-
+                ? body.get("reason").trim() : null;
+        String details = reason != null ? "User locked. Reason: " + reason : "User locked";
         auditLogService.log(auth.getName(), "ADMIN", "LOCK_USER", user.getEmail(), "SUCCESS", details);
-
         return ResponseEntity.ok(ApiResponse.success("User locked successfully", user));
     }
 
@@ -282,44 +238,26 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/unlock")
     public ResponseEntity<?> unlock(@PathVariable Long id, Authentication auth) {
-
         User user = repo.findById(id).orElse(null);
         if (user == null) return ResponseEntity.badRequest().body(ErrorResponse.of("User not found"));
-
-        user.setStatus("ACTIVE");
-        repo.save(user);
+        user.setStatus("ACTIVE"); repo.save(user);
         auditLogService.log(auth.getName(), "ADMIN", "UNLOCK_USER", user.getEmail(), "SUCCESS", "User unlocked");
-
         return ResponseEntity.ok(ApiResponse.success("User unlocked successfully", user));
     }
 
-    // ================= DELETE (Day 63 — accepts optional reason) =================
+    // ================= DELETE =================
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(
-            @PathVariable Long id,
-            @RequestBody(required = false) Map<String, String> body,
-            Authentication auth
-    ) {
-
+    public ResponseEntity<?> delete(@PathVariable Long id,
+                                    @RequestBody(required = false) Map<String, String> body, Authentication auth) {
         User user = repo.findById(id).orElse(null);
         if (user == null) return ResponseEntity.badRequest().body(ErrorResponse.of("User not found"));
-
         String email = user.getEmail();
-
-        // ✅ Day 63 — Capture reason before deleting user
         String reason = (body != null && body.get("reason") != null && !body.get("reason").isBlank())
-                ? body.get("reason").trim()
-                : null;
-
+                ? body.get("reason").trim() : null;
         repo.delete(user);
-
-        String details = reason != null
-                ? "User deleted. Reason: " + reason
-                : "User deleted";
-
+        String details = reason != null ? "User deleted. Reason: " + reason : "User deleted";
         auditLogService.log(auth.getName(), "ADMIN", "DELETE_USER", email, "SUCCESS", details);
-
         return ResponseEntity.ok(ApiResponse.success("User deleted successfully", null));
     }
 
@@ -327,109 +265,98 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/reset-password")
     public ResponseEntity<?> adminResetPassword(@PathVariable Long id, Authentication auth) {
-
         User user = repo.findById(id).orElse(null);
         if (user == null) return ResponseEntity.badRequest().body(ErrorResponse.of("User not found"));
-
-        if ("ADMIN".equalsIgnoreCase(user.getRole()) && !user.getEmail().equals(auth.getName())) {
+        if ("ADMIN".equalsIgnoreCase(user.getRole()) && !user.getEmail().equals(auth.getName()))
             return ResponseEntity.badRequest().body(ErrorResponse.of("Cannot reset another admin's password"));
-        }
-
         String tempPassword = generateTempPassword(10);
         user.setPassword(passwordEncoder.encode(tempPassword));
         repo.save(user);
-
         userSessionService.invalidateAllSessions(user.getEmail());
-
         auditLogService.log(auth.getName(), "ADMIN", "ADMIN_RESET_PASSWORD",
                 user.getEmail(), "SUCCESS", "Admin force-reset password. All sessions invalidated.");
-
-        return ResponseEntity.ok(
-                ApiResponse.success("Password reset successfully",
-                        new TempPasswordResponse(user.getEmail(), tempPassword))
-        );
+        return ResponseEntity.ok(ApiResponse.success("Password reset successfully",
+                new TempPasswordResponse(user.getEmail(), tempPassword)));
     }
 
     // ================= BULK ACTION =================
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/bulk-action")
-    public ResponseEntity<?> bulkAction(
-            @Valid @RequestBody BulkActionRequest request,
-            Authentication auth
-    ) {
-
+    public ResponseEntity<?> bulkAction(@Valid @RequestBody BulkActionRequest request, Authentication auth) {
         String action = request.getAction().trim().toUpperCase();
-
-        if (!List.of("ACTIVATE", "DEACTIVATE", "LOCK", "DELETE").contains(action)) {
-            return ResponseEntity.badRequest()
-                    .body(ErrorResponse.of("Invalid action. Allowed: ACTIVATE, DEACTIVATE, LOCK, DELETE"));
-        }
-
+        if (!List.of("ACTIVATE", "DEACTIVATE", "LOCK", "DELETE").contains(action))
+            return ResponseEntity.badRequest().body(ErrorResponse.of("Invalid action. Allowed: ACTIVATE, DEACTIVATE, LOCK, DELETE"));
         List<String> successList = new ArrayList<>();
         List<String> failedList = new ArrayList<>();
-
         for (Long userId : request.getUserIds()) {
-
             User user = repo.findById(userId).orElse(null);
-
-            if (user == null) {
-                failedList.add("ID " + userId + " not found");
-                continue;
+            if (user == null) { failedList.add("ID " + userId + " not found"); continue; }
+            if ("ADMIN".equalsIgnoreCase(user.getRole()) && !user.getEmail().equals(auth.getName())
+                    && (action.equals("DELETE") || action.equals("LOCK"))) {
+                failedList.add(user.getEmail() + " (cannot modify another admin)"); continue;
             }
-
-            if (
-                    "ADMIN".equalsIgnoreCase(user.getRole())
-                            && !user.getEmail().equals(auth.getName())
-                            && (action.equals("DELETE") || action.equals("LOCK"))
-            ) {
-                failedList.add(user.getEmail() + " (cannot modify another admin)");
-                continue;
-            }
-
             try {
-
                 switch (action) {
                     case "ACTIVATE" -> { user.setStatus("ACTIVE"); repo.save(user); }
                     case "DEACTIVATE" -> { user.setStatus("INACTIVE"); repo.save(user); }
-                    case "LOCK" -> {
-                        user.setStatus("LOCKED");
-                        repo.save(user);
-                        userSessionService.invalidateAllSessions(user.getEmail());
-                    }
+                    case "LOCK" -> { user.setStatus("LOCKED"); repo.save(user); userSessionService.invalidateAllSessions(user.getEmail()); }
                     case "DELETE" -> repo.delete(user);
                 }
-
                 successList.add(user.getEmail());
-
                 auditLogService.log(auth.getName(), "ADMIN", "BULK_" + action,
                         user.getEmail(), "SUCCESS", "Bulk action " + action + " applied");
-
             } catch (Exception e) {
                 failedList.add(user.getEmail() + " (error)");
                 auditLogService.log(auth.getName(), "ADMIN", "BULK_" + action,
                         user.getEmail(), "FAILED", "Bulk action failed: " + e.getMessage());
             }
         }
-
         String message = action + " applied to " + successList.size() + " user(s)";
         if (!failedList.isEmpty()) message += ". Failed: " + failedList.size();
-
-        return ResponseEntity.ok(
-                ApiResponse.success(message,
-                        new BulkActionResult(successList.size(), failedList.size(), successList, failedList))
-        );
+        return ResponseEntity.ok(ApiResponse.success(message,
+                new BulkActionResult(successList.size(), failedList.size(), successList, failedList)));
     }
 
     // ================= TEMP PASSWORD GENERATOR =================
     private String generateTempPassword(int length) {
-
         SecureRandom random = new SecureRandom();
         StringBuilder sb = new StringBuilder(length);
-
-        for (int i = 0; i < length; i++) {
+        for (int i = 0; i < length; i++)
             sb.append(TEMP_PASSWORD_CHARS.charAt(random.nextInt(TEMP_PASSWORD_CHARS.length())));
+        return sb.toString();
+    }
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}/note")
+    public ResponseEntity<?> updateAdminNote(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body,
+            Authentication auth
+    ) {
+        User user = repo.findById(id).orElse(null);
+        if (user == null)
+            return ResponseEntity.badRequest().body(ErrorResponse.of("User not found"));
+
+        String note = body.get("note");
+
+        if (note == null || note.trim().isEmpty()) {
+            user.setAdminNote(null);
+        } else {
+            user.setAdminNote(note.trim());
         }
 
-        return sb.toString();
+        repo.save(user);
+
+        auditLogService.log(
+                auth.getName(),
+                "ADMIN",
+                "UPDATE_ADMIN_NOTE",
+                user.getEmail(),
+                "SUCCESS",
+                "Admin note updated"
+        );
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Admin note updated successfully", user)
+        );
     }
 }

@@ -19,7 +19,6 @@ function Users() {
   const [listMessage, setListMessage] = useState("");
   const [listError, setListError] = useState("");
 
-  // ================= EXPORT STATE =================
   const [exporting, setExporting] = useState(false);
 
   // ================= BULK STATE =================
@@ -34,11 +33,14 @@ function Users() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState("");
 
+  // ✅ Day 72 — Login stats state
+  const [statsUserId, setStatsUserId] = useState(null);
+  const [statsData, setStatsData] = useState({});
+  const [statsLoading, setStatsLoading] = useState(false);
+
   // ================= ADD USER STATE =================
   const [showAddForm, setShowAddForm] = useState(false);
-  const [addForm, setAddForm] = useState({
-    name: "", email: "", password: "", role: "USER", status: "ACTIVE",
-  });
+  const [addForm, setAddForm] = useState({ name: "", email: "", password: "", role: "USER", status: "ACTIVE" });
   const [addMessage, setAddMessage] = useState("");
   const [addError, setAddError] = useState("");
 
@@ -48,24 +50,20 @@ function Users() {
   const [editMessage, setEditMessage] = useState("");
   const [editError, setEditError] = useState("");
 
-  // ================= TEMP PASSWORD STATE =================
   const [tempPasswordData, setTempPasswordData] = useState(null);
-
-  // ✅ Day 63 — Reason modal state
+// ✅ ADD THIS BLOCK HERE
+const [noteEditingId, setNoteEditingId] = useState(null);
+const [noteDrafts, setNoteDrafts] = useState({});
+  // Day 63 — Reason modal
   const [reasonModal, setReasonModal] = useState(null);
-  // reasonModal = { userId, userEmail, action, reasonText }
 
-  // ================= LOGOUT =================
   const handleLogout = () => { logoutUser(); navigate("/login"); };
 
   // ================= FETCH USERS =================
   const fetchUsers = async () => {
     setListError("");
     try {
-      const query = new URLSearchParams({
-        search: searchTerm, role: roleFilter, status: statusFilter,
-        page, size, sortBy, direction,
-      });
+      const query = new URLSearchParams({ search: searchTerm, role: roleFilter, status: statusFilter, page, size, sortBy, direction });
       const data = await apiRequest(`/users?${query.toString()}`, { method: "GET" });
       setUsers(data?.data?.content || []);
       setTotalPages(data?.data?.totalPages || 0);
@@ -84,31 +82,23 @@ function Users() {
     fetchUsers();
   }, [page, size, sortBy, direction, searchTerm, roleFilter, statusFilter]);
 
-  // ================= CLEAR FILTERS =================
   const handleClearFilters = () => {
     setSearchTerm(""); setRoleFilter(""); setStatusFilter("");
     setSortBy("name"); setDirection("asc"); setPage(0);
   };
 
   // ================= EXPORT CSV =================
-  const buildExportQuery = () => new URLSearchParams({
-    search: searchTerm, role: roleFilter, status: statusFilter, sortBy, direction,
-  }).toString();
+  const buildExportQuery = () => new URLSearchParams({ search: searchTerm, role: roleFilter, status: statusFilter, sortBy, direction }).toString();
 
   const handleExportCsv = async () => {
     setExporting(true); setListMessage(""); setListError("");
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(
-        `http://localhost:8080/users/export?${buildExportQuery()}`,
-        { method: "GET", headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await fetch(`http://localhost:8080/users/export?${buildExportQuery()}`, { method: "GET", headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) throw new Error("Export failed");
       const disposition = res.headers.get("Content-Disposition");
       let filename = "users-export.csv";
-      if (disposition && disposition.includes("filename=")) {
-        filename = disposition.split("filename=")[1].replace(/"/g, "").trim();
-      }
+      if (disposition && disposition.includes("filename=")) filename = disposition.split("filename=")[1].replace(/"/g, "").trim();
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -118,18 +108,12 @@ function Users() {
       setListMessage(`Exported successfully as ${filename}`);
     } catch (err) {
       setListError(err.message || "Failed to export");
-    } finally {
-      setExporting(false);
-    }
+    } finally { setExporting(false); }
   };
 
   // ================= SELECT =================
-  const handleSelectOne = (id) => {
-    setSelectedIds((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
-  };
-  const handleSelectAll = () => {
-    setSelectedIds(selectedIds.length === users.length ? [] : users.map((u) => u.id));
-  };
+  const handleSelectOne = (id) => setSelectedIds((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
+  const handleSelectAll = () => setSelectedIds(selectedIds.length === users.length ? [] : users.map((u) => u.id));
 
   // ================= BULK ACTION =================
   const handleBulkAction = async () => {
@@ -138,56 +122,49 @@ function Users() {
     if (!window.confirm(`Apply "${bulkAction}" to ${selectedIds.length} selected user(s)?`)) return;
     setBulkLoading(true); setListMessage(""); setListError("");
     try {
-      const data = await apiRequest("/users/bulk-action", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userIds: selectedIds, action: bulkAction }),
-      });
+      const data = await apiRequest("/users/bulk-action", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userIds: selectedIds, action: bulkAction }) });
       setListMessage(data.message || "Bulk action applied successfully");
       setSelectedIds([]); setBulkAction(""); fetchUsers();
-    } catch (err) {
-      setListError(err.message || "Bulk action failed");
-    } finally {
-      setBulkLoading(false);
-    }
+    } catch (err) { setListError(err.message || "Bulk action failed"); }
+    finally { setBulkLoading(false); }
   };
 
   // ================= VIEW HISTORY =================
   const handleViewHistory = async (user) => {
-    if (historyUserId === user.id) {
-      setHistoryUserId(null); setHistoryUserEmail(""); setHistoryLogs([]); setHistoryError("");
-      return;
-    }
+    if (historyUserId === user.id) { setHistoryUserId(null); setHistoryUserEmail(""); setHistoryLogs([]); setHistoryError(""); return; }
     setHistoryUserId(user.id); setHistoryUserEmail(user.email);
     setHistoryLogs([]); setHistoryLoading(true); setHistoryError("");
     try {
       const data = await apiRequest(`/users/${user.id}/history`, { method: "GET" });
       setHistoryLogs(data.data || []);
+    } catch (err) { setHistoryError(err.message || "Failed to load history"); }
+    finally { setHistoryLoading(false); }
+  };
+
+  // ✅ Day 72 — VIEW LOGIN STATS
+  const handleViewStats = async (user) => {
+    if (statsUserId === user.id) { setStatsUserId(null); return; }
+    setStatsUserId(user.id);
+    setStatsLoading(true);
+    try {
+      const data = await apiRequest(`/users/${user.id}/login-stats`, { method: "GET" });
+      setStatsData((prev) => ({ ...prev, [user.id]: data.data }));
     } catch (err) {
-      setHistoryError(err.message || "Failed to load history");
-    } finally {
-      setHistoryLoading(false);
-    }
+      setStatsData((prev) => ({ ...prev, [user.id]: { error: err.message || "Failed to load stats" } }));
+    } finally { setStatsLoading(false); }
   };
 
   // ================= ADD USER =================
   const handleAddUser = async (e) => {
     e.preventDefault(); setAddMessage(""); setAddError("");
     try {
-      await apiRequest("/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(addForm),
-      });
+      await apiRequest("/users", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(addForm) });
       setAddMessage("User added successfully");
       setAddForm({ name: "", email: "", password: "", role: "USER", status: "ACTIVE" });
       setShowAddForm(false); fetchUsers();
-    } catch (err) {
-      setAddError(err.message || "Failed to add user");
-    }
+    } catch (err) { setAddError(err.message || "Failed to add user"); }
   };
 
-  // ================= OPEN EDIT =================
   const handleOpenEdit = (user) => {
     setEditingUser(user);
     setEditForm({ name: user.name, email: user.email, role: user.role, status: user.status });
@@ -195,61 +172,34 @@ function Users() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // ================= SAVE EDIT =================
   const handleSaveEdit = async (e) => {
     e.preventDefault(); setEditMessage(""); setEditError("");
     try {
-      await apiRequest(`/users/${editingUser.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editForm),
-      });
+      await apiRequest(`/users/${editingUser.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(editForm) });
       setEditMessage("User updated successfully");
       setEditingUser(null); fetchUsers();
-    } catch (err) {
-      setEditError(err.message || "Failed to update user");
-    }
+    } catch (err) { setEditError(err.message || "Failed to update user"); }
   };
 
-  // ================= DAY 63 — OPEN REASON MODAL =================
-  const openReasonModal = (userId, userEmail, action) => {
-    setReasonModal({ userId, userEmail, action, reasonText: "" });
-    setListMessage(""); setListError("");
-  };
+  const openReasonModal = (userId, userEmail, action) => { setReasonModal({ userId, userEmail, action, reasonText: "" }); setListMessage(""); setListError(""); };
 
-  // ================= DAY 63 — CONFIRM ACTION WITH REASON =================
   const handleConfirmWithReason = async () => {
     if (!reasonModal) return;
-
     const { userId, userEmail, action, reasonText } = reasonModal;
-
-    setReasonModal(null);
-    setListMessage(""); setListError("");
-
+    setReasonModal(null); setListMessage(""); setListError("");
     try {
       if (action === "delete") {
-        await apiRequest(`/users/${userId}`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reason: reasonText }),
-        });
+        await apiRequest(`/users/${userId}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reason: reasonText }) });
         setListMessage(`${userEmail} deleted successfully`);
       } else {
-        await apiRequest(`/users/${userId}/${action}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reason: reasonText }),
-        });
+        await apiRequest(`/users/${userId}/${action}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reason: reasonText }) });
         const labels = { deactivate: "deactivated", lock: "locked" };
         setListMessage(`${userEmail} ${labels[action] || action} successfully`);
       }
       fetchUsers();
-    } catch (err) {
-      setListError(err.message || "Action failed");
-    }
+    } catch (err) { setListError(err.message || "Action failed"); }
   };
 
-  // ================= ACTIVATE / UNLOCK (no reason needed) =================
   const handleStatusAction = async (id, action) => {
     setListMessage(""); setListError("");
     try {
@@ -257,32 +207,23 @@ function Users() {
       const labels = { activate: "User activated", unlock: "User unlocked" };
       setListMessage(labels[action] || "Action successful");
       fetchUsers();
-    } catch (err) {
-      setListError(err.message || "Action failed");
-    }
+    } catch (err) { setListError(err.message || "Action failed"); }
   };
 
-  // ================= RESET PASSWORD =================
   const handleResetPassword = async (id) => {
     if (!window.confirm("Generate temporary password and invalidate all sessions?")) return;
     setTempPasswordData(null); setListMessage(""); setListError("");
     try {
       const data = await apiRequest(`/users/${id}/reset-password`, { method: "PUT" });
       setTempPasswordData(data.data);
-    } catch (err) {
-      setListError(err.message || "Failed to reset password");
-    }
+    } catch (err) { setListError(err.message || "Failed to reset password"); }
   };
 
-  // ================= STATUS BADGE =================
   const statusBadge = (status) => {
-    const cls = status === "ACTIVE" ? "status-badge status-active"
-      : status === "LOCKED" ? "status-badge status-locked"
-      : "status-badge status-inactive";
+    const cls = status === "ACTIVE" ? "status-badge status-active" : status === "LOCKED" ? "status-badge status-locked" : "status-badge status-inactive";
     return <span className={cls}>{status}</span>;
   };
 
-  // ================= ACTION COLOR =================
   const getActionColor = (action) => {
     if (!action) return "#374151";
     const a = action.toUpperCase();
@@ -296,9 +237,8 @@ function Users() {
     return "#374151";
   };
 
-  // ================= FORMAT DATE =================
   const formatDateTime = (value) => {
-    if (!value) return "N/A";
+    if (!value) return "Never";
     if (Array.isArray(value)) {
       const [y, mo, d, h, mi] = value;
       return `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")} ${String(h).padStart(2, "0")}:${String(mi).padStart(2, "0")}`;
@@ -310,15 +250,28 @@ function Users() {
   const someSelected = selectedIds.length > 0;
   const filtersActive = searchTerm || roleFilter || statusFilter;
 
-  // ================= REASON MODAL ACTION LABEL =================
   const getModalLabel = (action) => {
     if (action === "lock") return { title: "🔒 Lock User", color: "#7c3aed", bg: "#f5f3ff", border: "#ddd6fe" };
     if (action === "deactivate") return { title: "⏸ Deactivate User", color: "#d97706", bg: "#fffbeb", border: "#fde68a" };
     if (action === "delete") return { title: "🗑 Delete User", color: "#dc2626", bg: "#fff1f2", border: "#fecaca" };
     return { title: "Confirm Action", color: "#374151", bg: "#f9fafb", border: "#e5e7eb" };
   };
+  
+  const handleSaveNote = async (id) => {
+  try {
+    await apiRequest(`/users/${id}/note`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ note: noteDrafts[id] || "" })
+    });
 
-  // ================= RENDER =================
+    setNoteEditingId(null);
+    setNoteText("");
+    fetchUsers();
+  } catch (err) {
+    setListError(err.message || "Failed to save note");
+  }
+};
   return (
     <div className="container">
       <div className="card">
@@ -335,59 +288,25 @@ function Users() {
           </div>
         </div>
 
-        {/* ===== DAY 63 — REASON MODAL ===== */}
+        {/* ===== REASON MODAL ===== */}
         {reasonModal && (() => {
           const { action, userEmail, reasonText } = reasonModal;
           const label = getModalLabel(action);
           return (
-            <div style={{
-              position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              zIndex: 1000, padding: "20px",
-            }}>
-              <div style={{
-                background: "#fff", borderRadius: "16px", padding: "28px",
-                maxWidth: "460px", width: "100%",
-                boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
-                border: `1px solid ${label.border}`,
-              }}>
-                <h3 style={{ margin: "0 0 6px", color: label.color, fontSize: "18px" }}>
-                  {label.title}
-                </h3>
-                <p style={{ margin: "0 0 20px", color: "#6b7280", fontSize: "14px" }}>
-                  Target: <strong>{userEmail}</strong>
-                </p>
-
+            <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}>
+              <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", maxWidth: "460px", width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.15)", border: `1px solid ${label.border}` }}>
+                <h3 style={{ margin: "0 0 6px", color: label.color, fontSize: "18px" }}>{label.title}</h3>
+                <p style={{ margin: "0 0 20px", color: "#6b7280", fontSize: "14px" }}>Target: <strong>{userEmail}</strong></p>
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "6px" }}>
                   Reason <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
                 </label>
-                <textarea
-                  placeholder={`Why are you ${action === "delete" ? "deleting" : action === "lock" ? "locking" : "deactivating"} this user?`}
-                  value={reasonText}
-                  onChange={(e) => setReasonModal({ ...reasonModal, reasonText: e.target.value })}
-                  rows={3}
-                  style={{
-                    width: "100%", padding: "10px 12px", borderRadius: "8px",
-                    border: "1px solid #d1d5db", fontSize: "14px", resize: "vertical",
-                    fontFamily: "inherit", marginBottom: "20px", boxSizing: "border-box",
-                    outline: "none",
-                  }}
-                  autoFocus
-                />
-
+                <textarea placeholder={`Why are you ${action === "delete" ? "deleting" : action === "lock" ? "locking" : "deactivating"} this user?`}
+                  value={reasonText} onChange={(e) => setReasonModal({ ...reasonModal, reasonText: e.target.value })}
+                  rows={3} autoFocus
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "14px", resize: "vertical", fontFamily: "inherit", marginBottom: "20px", boxSizing: "border-box", outline: "none" }} />
                 <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                  <button
-                    type="button"
-                    onClick={() => setReasonModal(null)}
-                    style={{ width: "auto", minWidth: "100px", marginTop: 0, background: "#6b7280" }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleConfirmWithReason}
-                    style={{ width: "auto", minWidth: "140px", marginTop: 0, background: label.color }}
-                  >
+                  <button type="button" onClick={() => setReasonModal(null)} style={{ width: "auto", minWidth: "100px", marginTop: 0, background: "#6b7280" }}>Cancel</button>
+                  <button type="button" onClick={handleConfirmWithReason} style={{ width: "auto", minWidth: "140px", marginTop: 0, background: label.color }}>
                     Confirm {action === "delete" ? "Delete" : action === "lock" ? "Lock" : "Deactivate"}
                   </button>
                 </div>
@@ -402,17 +321,12 @@ function Users() {
             <p style={{ fontWeight: "700", color: "#92400e" }}>⚠️ Temporary Password Generated</p>
             <p><strong>User:</strong> {tempPasswordData.email}</p>
             <p><strong>Password:</strong>{" "}
-              <span style={{ fontFamily: "monospace", background: "#fff", padding: "2px 8px", borderRadius: "6px", border: "1px solid #e5e7eb" }}>
-                {tempPasswordData.temporaryPassword}
-              </span>
+              <span style={{ fontFamily: "monospace", background: "#fff", padding: "2px 8px", borderRadius: "6px", border: "1px solid #e5e7eb" }}>{tempPasswordData.temporaryPassword}</span>
             </p>
-            <button type="button" style={{ width: "auto", marginTop: "10px", background: "#92400e" }} onClick={() => setTempPasswordData(null)}>
-              Dismiss
-            </button>
+            <button type="button" style={{ width: "auto", marginTop: "10px", background: "#92400e" }} onClick={() => setTempPasswordData(null)}>Dismiss</button>
           </div>
         )}
 
-        {/* ===== MESSAGES ===== */}
         {listMessage && <p className="message">{listMessage}</p>}
         {listError && <p className="error-message">{listError}</p>}
 
@@ -426,13 +340,10 @@ function Users() {
               <input type="text" placeholder="Name" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} required minLength={2} maxLength={50} />
               <input type="email" placeholder="Email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} required />
               <select value={editForm.role} onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}>
-                <option value="USER">USER</option>
-                <option value="ADMIN">ADMIN</option>
+                <option value="USER">USER</option><option value="ADMIN">ADMIN</option>
               </select>
               <select value={editForm.status} onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}>
-                <option value="ACTIVE">ACTIVE</option>
-                <option value="INACTIVE">INACTIVE</option>
-                <option value="LOCKED">LOCKED</option>
+                <option value="ACTIVE">ACTIVE</option><option value="INACTIVE">INACTIVE</option><option value="LOCKED">LOCKED</option>
               </select>
               <div className="inline-actions">
                 <button type="submit">Save Changes</button>
@@ -446,8 +357,7 @@ function Users() {
         <div className="dashboard-section">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: showAddForm ? "16px" : "0" }}>
             <h3 style={{ margin: 0 }}>Add New User</h3>
-            <button type="button" style={{ width: "auto", minWidth: "120px", marginTop: 0 }}
-              onClick={() => { setShowAddForm(!showAddForm); setAddMessage(""); setAddError(""); }}>
+            <button type="button" style={{ width: "auto", minWidth: "120px", marginTop: 0 }} onClick={() => { setShowAddForm(!showAddForm); setAddMessage(""); setAddError(""); }}>
               {showAddForm ? "Cancel" : "+ Add User"}
             </button>
           </div>
@@ -459,13 +369,10 @@ function Users() {
               <input type="email" placeholder="Email address" value={addForm.email} onChange={(e) => setAddForm({ ...addForm, email: e.target.value })} required />
               <input type="password" placeholder="Password (min 6 characters)" value={addForm.password} onChange={(e) => setAddForm({ ...addForm, password: e.target.value })} required minLength={6} />
               <select value={addForm.role} onChange={(e) => setAddForm({ ...addForm, role: e.target.value })}>
-                <option value="USER">USER</option>
-                <option value="ADMIN">ADMIN</option>
+                <option value="USER">USER</option><option value="ADMIN">ADMIN</option>
               </select>
               <select value={addForm.status} onChange={(e) => setAddForm({ ...addForm, status: e.target.value })}>
-                <option value="ACTIVE">ACTIVE</option>
-                <option value="INACTIVE">INACTIVE</option>
-                <option value="LOCKED">LOCKED</option>
+                <option value="ACTIVE">ACTIVE</option><option value="INACTIVE">INACTIVE</option><option value="LOCKED">LOCKED</option>
               </select>
               <button type="submit">Add User</button>
             </form>
@@ -483,43 +390,26 @@ function Users() {
             )}
           </h3>
           <div className="dashboard-toolbar">
-            <input type="text" placeholder="Search by name or email..." value={searchTerm}
-              onChange={(e) => { setSearchTerm(e.target.value); setPage(0); }} />
+            <input type="text" placeholder="Search by name or email..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setPage(0); }} />
             <select value={roleFilter} onChange={(e) => { setRoleFilter(e.target.value); setPage(0); }}>
-              <option value="">All Roles</option>
-              <option value="USER">USER</option>
-              <option value="ADMIN">ADMIN</option>
+              <option value="">All Roles</option><option value="USER">USER</option><option value="ADMIN">ADMIN</option>
             </select>
             <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(0); }}>
-              <option value="">All Statuses</option>
-              <option value="ACTIVE">ACTIVE</option>
-              <option value="INACTIVE">INACTIVE</option>
-              <option value="LOCKED">LOCKED</option>
+              <option value="">All Statuses</option><option value="ACTIVE">ACTIVE</option><option value="INACTIVE">INACTIVE</option><option value="LOCKED">LOCKED</option>
             </select>
             <select value={sortBy} onChange={(e) => { setSortBy(e.target.value); setPage(0); }}>
-              <option value="name">Sort by Name</option>
-              <option value="email">Sort by Email</option>
-              <option value="role">Sort by Role</option>
-              <option value="status">Sort by Status</option>
+              <option value="name">Sort by Name</option><option value="email">Sort by Email</option><option value="role">Sort by Role</option><option value="status">Sort by Status</option>
             </select>
             <select value={direction} onChange={(e) => { setDirection(e.target.value); setPage(0); }}>
-              <option value="asc">Ascending</option>
-              <option value="desc">Descending</option>
+              <option value="asc">Ascending</option><option value="desc">Descending</option>
             </select>
-            {filtersActive && (
-              <button type="button" onClick={handleClearFilters} style={{ background: "#6b7280" }}>Clear Filters</button>
-            )}
+            {filtersActive && <button type="button" onClick={handleClearFilters} style={{ background: "#6b7280" }}>Clear Filters</button>}
           </div>
         </div>
 
         {/* ===== BULK ACTION BAR ===== */}
         {users.length > 0 && (
-          <div style={{
-            background: someSelected ? "#eff6ff" : "#f9fafb",
-            border: `1px solid ${someSelected ? "#bfdbfe" : "#e5e7eb"}`,
-            borderRadius: "12px", padding: "12px 16px", marginBottom: "16px",
-            display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap",
-          }}>
+          <div style={{ background: someSelected ? "#eff6ff" : "#f9fafb", border: `1px solid ${someSelected ? "#bfdbfe" : "#e5e7eb"}`, borderRadius: "12px", padding: "12px 16px", marginBottom: "16px", display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
             <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontWeight: "600", fontSize: "14px", color: "#374151" }}>
               <input type="checkbox" checked={allSelected} onChange={handleSelectAll} style={{ width: "16px", height: "16px", cursor: "pointer" }} />
               {allSelected ? "Deselect All" : `Select All (${users.length})`}
@@ -527,8 +417,7 @@ function Users() {
             {someSelected && (
               <>
                 <span style={{ fontSize: "13px", color: "#2563eb", fontWeight: "600" }}>{selectedIds.length} selected</span>
-                <select value={bulkAction} onChange={(e) => setBulkAction(e.target.value)}
-                  style={{ padding: "6px 10px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "14px", background: "#fff", cursor: "pointer", width: "auto", marginTop: 0 }}>
+                <select value={bulkAction} onChange={(e) => setBulkAction(e.target.value)} style={{ padding: "6px 10px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "14px", background: "#fff", cursor: "pointer", width: "auto", marginTop: 0 }}>
                   <option value="">Select Action</option>
                   <option value="ACTIVATE">✅ Activate</option>
                   <option value="DEACTIVATE">⏸ Deactivate</option>
@@ -536,104 +425,167 @@ function Users() {
                   <option value="DELETE">🗑 Delete</option>
                 </select>
                 <button type="button" onClick={handleBulkAction} disabled={!bulkAction || bulkLoading}
-                  style={{
-                    width: "auto", minWidth: "140px", marginTop: 0,
-                    background: bulkAction === "DELETE" ? "#dc2626" : bulkAction === "LOCK" ? "#7c3aed" : bulkAction === "DEACTIVATE" ? "#d97706" : "#16a34a",
-                    opacity: !bulkAction || bulkLoading ? 0.6 : 1,
-                  }}>
+                  style={{ width: "auto", minWidth: "140px", marginTop: 0, background: bulkAction === "DELETE" ? "#dc2626" : bulkAction === "LOCK" ? "#7c3aed" : bulkAction === "DEACTIVATE" ? "#d97706" : "#16a34a", opacity: !bulkAction || bulkLoading ? 0.6 : 1 }}>
                   {bulkLoading ? "Applying..." : `Apply to ${selectedIds.length}`}
                 </button>
-                <button type="button" onClick={() => setSelectedIds([])}
-                  style={{ width: "auto", minWidth: "80px", marginTop: 0, background: "#6b7280" }}>
-                  Clear
-                </button>
+                <button type="button" onClick={() => setSelectedIds([])} style={{ width: "auto", minWidth: "80px", marginTop: 0, background: "#6b7280" }}>Clear</button>
               </>
             )}
           </div>
         )}
 
-        {/* ===== ALL USERS HEADER + EXPORT + PAGE SIZE ===== */}
+        {/* ===== ALL USERS HEADER ===== */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "8px 0 14px", flexWrap: "wrap", gap: "10px" }}>
           <h3 style={{ margin: 0 }}>
             All Users
-            <span style={{ marginLeft: "10px", fontSize: "14px", color: "#6b7280", fontWeight: "400" }}>
-              ({totalElements} total)
-            </span>
+            <span style={{ marginLeft: "10px", fontSize: "14px", color: "#6b7280", fontWeight: "400" }}>({totalElements} total)</span>
           </h3>
           <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               <span style={{ fontSize: "13px", color: "#6b7280", fontWeight: "500", whiteSpace: "nowrap" }}>Per page:</span>
-              <select value={size} onChange={(e) => { setSize(Number(e.target.value)); setPage(0); }}
-                style={{ padding: "5px 8px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "13px", background: "#fff", cursor: "pointer", width: "auto", marginTop: 0 }}>
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
+              <select value={size} onChange={(e) => { setSize(Number(e.target.value)); setPage(0); }} style={{ padding: "5px 8px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "13px", background: "#fff", cursor: "pointer", width: "auto", marginTop: 0 }}>
+                <option value={5}>5</option><option value={10}>10</option><option value={25}>25</option><option value={50}>50</option>
               </select>
             </div>
             <button type="button" onClick={handleExportCsv} disabled={exporting || totalElements === 0}
-              style={{
-                width: "auto", minWidth: "160px", marginTop: 0,
-                background: exporting ? "#9ca3af" : totalElements === 0 ? "#d1d5db" : "#16a34a",
-                display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
-              }}>
+              style={{ width: "auto", minWidth: "160px", marginTop: 0, background: exporting ? "#9ca3af" : totalElements === 0 ? "#d1d5db" : "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
               {exporting ? "Exporting..." : "⬇ Export CSV"}
             </button>
           </div>
         </div>
 
         {/* ===== USER LIST ===== */}
-        {users.length === 0 ? (
-          <p>No users found</p>
-        ) : (
+        {users.length === 0 ? <p>No users found</p> : (
           <div className="user-list">
             {users.map((user) => (
               <div key={user.id}>
-                <div className="user-card" style={{
-                  border: selectedIds.includes(user.id) ? "2px solid #2563eb" : "1px solid #e5e7eb",
-                  background: selectedIds.includes(user.id) ? "#eff6ff" : "#ffffff",
-                }}>
+                <div className="user-card" style={{ border: selectedIds.includes(user.id) ? "2px solid #2563eb" : "1px solid #e5e7eb", background: selectedIds.includes(user.id) ? "#eff6ff" : "#ffffff" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
                     <input type="checkbox" checked={selectedIds.includes(user.id)} onChange={() => handleSelectOne(user.id)} style={{ width: "16px", height: "16px", cursor: "pointer" }} />
                     <strong style={{ fontSize: "15px", color: "#111827" }}>{user.name}</strong>
                   </div>
                   <p><strong>Email:</strong> {user.email}</p>
-                  <p><strong>Role:</strong>{" "}
-                    <span style={{ fontWeight: "700", color: user.role === "ADMIN" ? "#7c3aed" : "#374151" }}>{user.role}</span>
-                  </p>
+                  <p><strong>Role:</strong>{" "}<span style={{ fontWeight: "700", color: user.role === "ADMIN" ? "#7c3aed" : "#374151" }}>{user.role}</span></p>
                   <p><strong>Status:</strong> {statusBadge(user.status)}</p>
+
+{/* ===== ADMIN NOTE FEATURE START ===== */}
+<p>
+  <strong>Admin Note:</strong>{" "}
+  {noteEditingId === user.id ? (
+    <textarea
+      value={noteDrafts[user.id] ?? user.adminNote ?? ""}
+onChange={(e) =>
+  setNoteDrafts((prev) => ({
+    ...prev,
+    [user.id]: e.target.value
+  }))
+}
+      rows={2}
+      style={{ width: "100%" }}
+    />
+  ) : (
+    user.adminNote || "No note added"
+  )}
+</p>
+
+<div className="user-actions">
+  {noteEditingId === user.id ? (
+    <>
+      <button type="button" onClick={() => handleSaveNote(user.id)}>
+        Save Note
+      </button>
+      <button type="button" onClick={() => {
+  setNoteEditingId(null);
+}}>
+        Cancel
+      </button>
+    </>
+  ) : (
+    <button
+      type="button"
+      onClick={() => {
+        setNoteEditingId(user.id);
+setNoteDrafts((prev) => ({
+  ...prev,
+  [user.id]: user.adminNote || ""
+}));
+      }}
+    >
+      Edit Note
+    </button>
+  )}
+</div>
+{/* ===== ADMIN NOTE FEATURE END ===== */}
 
                   <div className="user-actions">
                     <button type="button" onClick={() => handleOpenEdit(user)}>Edit</button>
                     <button type="button" style={{ background: "#16a34a" }} onClick={() => handleStatusAction(user.id, "activate")} disabled={user.status === "ACTIVE"}>Activate</button>
-
-                    {/* ✅ Day 63 — Deactivate opens reason modal */}
-                    <button type="button" style={{ background: "#d97706" }}
-                      onClick={() => openReasonModal(user.id, user.email, "deactivate")}
-                      disabled={user.status === "INACTIVE"}>
-                      Deactivate
-                    </button>
-
-                    {/* ✅ Day 63 — Lock opens reason modal */}
-                    <button type="button" style={{ background: "#7c3aed" }}
-                      onClick={() => openReasonModal(user.id, user.email, "lock")}
-                      disabled={user.status === "LOCKED"}>
-                      Lock
-                    </button>
-
+                    <button type="button" style={{ background: "#d97706" }} onClick={() => openReasonModal(user.id, user.email, "deactivate")} disabled={user.status === "INACTIVE"}>Deactivate</button>
+                    <button type="button" style={{ background: "#7c3aed" }} onClick={() => openReasonModal(user.id, user.email, "lock")} disabled={user.status === "LOCKED"}>Lock</button>
                     <button type="button" style={{ background: "#0891b2" }} onClick={() => handleStatusAction(user.id, "unlock")} disabled={user.status === "ACTIVE"}>Unlock</button>
                     <button type="button" style={{ background: "#92400e" }} onClick={() => handleResetPassword(user.id)}>Reset Password</button>
+
+                    {/* ✅ Day 72 — Stats button */}
+                    <button type="button"
+                      style={{ background: statsUserId === user.id ? "#059669" : "#0f766e" }}
+                      onClick={() => handleViewStats(user)}>
+                      {statsUserId === user.id ? "Hide Stats" : "📊 Stats"}
+                    </button>
+
                     <button type="button" style={{ background: historyUserId === user.id ? "#1e40af" : "#374151" }} onClick={() => handleViewHistory(user)}>
                       {historyUserId === user.id ? "Hide History" : "View History"}
                     </button>
-
-                    {/* ✅ Day 63 — Delete opens reason modal */}
-                    <button type="button" className="delete-btn"
-                      onClick={() => openReasonModal(user.id, user.email, "delete")}>
-                      Delete
-                    </button>
+                    <button type="button" className="delete-btn" onClick={() => openReasonModal(user.id, user.email, "delete")}>Delete</button>
                   </div>
                 </div>
+
+                {/* ✅ Day 72 — LOGIN STATS PANEL */}
+                {statsUserId === user.id && (
+                  <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderTop: "none", borderRadius: "0 0 12px 12px", padding: "16px", marginBottom: "4px" }}>
+                    <p style={{ fontWeight: "700", marginBottom: "12px", color: "#14532d", fontSize: "14px" }}>
+                      📊 Login Stats — {user.email}
+                    </p>
+
+                    {statsLoading && statsData[user.id] === undefined ? (
+                      <p style={{ color: "#6b7280", fontSize: "13px" }}>Loading stats...</p>
+                    ) : statsData[user.id]?.error ? (
+                      <p className="error-message">{statsData[user.id].error}</p>
+                    ) : statsData[user.id] ? (
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px" }}>
+
+                        <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: "10px", padding: "12px", borderTop: "3px solid #2563eb" }}>
+                          <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "#6b7280", textTransform: "uppercase" }}>Total Logins</p>
+                          <p style={{ margin: 0, fontSize: "24px", fontWeight: "800", color: "#2563eb" }}>{statsData[user.id].totalLogins ?? 0}</p>
+                          <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#9ca3af" }}>successful all time</p>
+                        </div>
+
+                        <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: "10px", padding: "12px", borderTop: "3px solid #dc2626" }}>
+                          <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "#6b7280", textTransform: "uppercase" }}>Failed (7 days)</p>
+                          <p style={{ margin: 0, fontSize: "24px", fontWeight: "800", color: statsData[user.id].recentFailedLogins > 0 ? "#dc2626" : "#111827" }}>
+                            {statsData[user.id].recentFailedLogins ?? 0}
+                          </p>
+                          <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#9ca3af" }}>
+                            {statsData[user.id].recentFailedLogins > 3 ? "⚠️ suspicious" : "✅ normal"}
+                          </p>
+                        </div>
+
+                        <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: "10px", padding: "12px", borderTop: "3px solid #7c3aed" }}>
+                          <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "#6b7280", textTransform: "uppercase" }}>Total Actions</p>
+                          <p style={{ margin: 0, fontSize: "24px", fontWeight: "800", color: "#7c3aed" }}>{statsData[user.id].totalActions ?? 0}</p>
+                          <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#9ca3af" }}>audit log entries</p>
+                        </div>
+
+                        <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: "10px", padding: "12px", borderTop: "3px solid #0891b2" }}>
+                          <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "#6b7280", textTransform: "uppercase" }}>Last Login</p>
+                          <p style={{ margin: 0, fontSize: "13px", fontWeight: "700", color: "#0891b2", lineHeight: "1.4" }}>
+                            {statsData[user.id].lastLoginAt ? formatDateTime(statsData[user.id].lastLoginAt) : "Never"}
+                          </p>
+                        </div>
+
+                      </div>
+                    ) : null}
+                  </div>
+                )}
 
                 {/* ===== HISTORY TIMELINE ===== */}
                 {historyUserId === user.id && (
@@ -651,15 +603,10 @@ function Users() {
                             <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: getActionColor(log.action), flexShrink: 0, marginTop: "4px" }} />
                             <div style={{ flex: 1 }}>
                               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px", flexWrap: "wrap" }}>
-                                <span style={{ fontFamily: "monospace", background: getActionColor(log.action) + "18", color: getActionColor(log.action), padding: "2px 8px", borderRadius: "6px", fontSize: "12px", fontWeight: "700" }}>
-                                  {log.action}
-                                </span>
+                                <span style={{ fontFamily: "monospace", background: getActionColor(log.action) + "18", color: getActionColor(log.action), padding: "2px 8px", borderRadius: "6px", fontSize: "12px", fontWeight: "700" }}>{log.action}</span>
                                 <span style={{ fontSize: "12px", color: "#6b7280" }}>by <strong>{log.actorEmail}</strong></span>
                               </div>
-                              {/* ✅ Day 63 — Details now shows reason if provided */}
-                              {log.details && (
-                                <p style={{ margin: 0, fontSize: "12px", color: "#6b7280", lineHeight: "1.5" }}>{log.details}</p>
-                              )}
+                              {log.details && <p style={{ margin: 0, fontSize: "12px", color: "#6b7280", lineHeight: "1.5" }}>{log.details}</p>}
                             </div>
                             <span style={{ fontSize: "11px", color: "#9ca3af", flexShrink: 0, whiteSpace: "nowrap" }}>{formatDateTime(log.createdAt)}</span>
                           </div>

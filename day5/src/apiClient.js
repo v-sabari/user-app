@@ -1,4 +1,9 @@
-const API_BASE_URL = "http://localhost:8080";
+// ✅ Day 86-87 — API_BASE_URL now reads from a Vite environment variable.
+// Locally (npm run dev), if you don't set VITE_API_URL, it falls back to
+// localhost:8080 — your local dev workflow is completely unchanged.
+// On Vercel, you'll set VITE_API_URL to your real Render backend URL,
+// and Vite bakes that value into the build at deploy time.
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 // ================= JWT PARSER =================
 const parseJwt = (token) => {

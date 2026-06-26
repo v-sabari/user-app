@@ -47,6 +47,13 @@ public class UserController {
     }
 
     // ================= GET ALL USERS =================
+    // ✅ Day 89-90 — SECURITY FIX: This endpoint was missing @PreAuthorize,
+    // unlike every other endpoint in this controller. Any authenticated
+    // regular USER (not just ADMIN) could previously call this and retrieve
+    // the full list of every user's name, email, role, and account status.
+    // Confirmed and fixed — now matches the access level of every sibling
+    // endpoint in this file.
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<?> getUsers(
             @RequestParam(defaultValue = "") String search,
@@ -136,17 +143,13 @@ public class UserController {
 
         String email = user.getEmail();
 
-        // ✅ Total successful logins
         long totalLogins = auditLogRepository.countSuccessfulLoginsByEmail(email);
 
-        // ✅ Failed logins in last 7 days
         LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
         long recentFailedLogins = auditLogRepository.countRecentFailedLogins(email, sevenDaysAgo);
 
-        // ✅ Total actions ever performed by this user
         long totalActions = auditLogRepository.countByActorEmail(email);
 
-        // ✅ Last successful login timestamp
         List<AuditLog> recentLogins = auditLogRepository.findRecentSuccessfulLogins(
                 email, PageRequest.of(0, 1)
         );
@@ -325,6 +328,8 @@ public class UserController {
             sb.append(TEMP_PASSWORD_CHARS.charAt(random.nextInt(TEMP_PASSWORD_CHARS.length())));
         return sb.toString();
     }
+
+    // ================= UPDATE ADMIN NOTE =================
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/note")
     public ResponseEntity<?> updateAdminNote(

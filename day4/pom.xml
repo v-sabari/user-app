@@ -8,7 +8,15 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.5</version>
+        <!-- ✅ Day 89-90 — SECURITY FIX: bumped from 3.2.5 (EOL since Dec 2024,
+             confirmed via Spring's own end-of-life advisory; even the final
+             3.2.x patch 3.2.12 receives no further OSS security patches) to
+             3.3.13, the last patch of the next maintained branch. This is a
+             confirmed-safe move for this project: your SecurityConfig.java
+             already uses the modern SecurityFilterChain/authorizeHttpRequests
+             API introduced in 3.0, so none of the Boot 2->3 breaking changes
+             (which is what most migration guides cover) apply here. -->
+        <version>3.3.13</version>
         <relativePath/>
     </parent>
 
@@ -52,11 +60,15 @@
             <artifactId>twilio</artifactId>
             <version>9.2.0</version>
         </dependency>
-        <dependency>
-            <groupId>com.bucket4j</groupId>
-            <artifactId>bucket4j-core</artifactId>
-            <version>8.10.1</version>
-        </dependency>
+
+        <!-- ✅ Day 89-90 — REMOVED: bucket4j-core
+             Confirmed unused. Your actual rate limiting (RateLimiterService.java,
+             RateLimitFilter.java) is a hand-built implementation using
+             ConcurrentHashMap + a custom Bucket inner class — it never imports
+             or calls anything from io.github.bucket4j. This dependency was
+             dead weight, adding to your dependency-CVE surface for no benefit.
+             Removing it is safe; nothing in your code references it. -->
+
         <!-- ===== TOTP 2FA ===== -->
         <dependency>
             <groupId>dev.samstevens.totp</groupId>

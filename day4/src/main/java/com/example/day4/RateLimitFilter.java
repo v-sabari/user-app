@@ -43,6 +43,14 @@ public class RateLimitFilter extends OncePerRequestFilter {
             allowed = rateLimiterService.allowRequest(ip + "_reset", 5, 600_000);
         } else if (path.equals("/users") && request.getMethod().equals("POST")) {
             allowed = rateLimiterService.allowRequest(ip + "_users", 10, 60_000);
+        } else if (path.equals("/users/export")) {
+            // ✅ Day 89-90 — SECURITY FIX: this endpoint exports the entire
+            // user database as CSV and previously had no rate limit at all,
+            // unlike every other sensitive endpoint in this filter. Limited
+            // to 5 exports per 5 minutes per IP — generous enough for normal
+            // admin use, but stops rapid repeated full-database dumps if an
+            // admin account/session is ever compromised.
+            allowed = rateLimiterService.allowRequest(ip + "_users_export", 5, 300_000);
         }
 
         if (!allowed) {

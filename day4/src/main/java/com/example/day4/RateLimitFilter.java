@@ -51,6 +51,17 @@ public class RateLimitFilter extends OncePerRequestFilter {
             // admin use, but stops rapid repeated full-database dumps if an
             // admin account/session is ever compromised.
             allowed = rateLimiterService.allowRequest(ip + "_users_export", 5, 300_000);
+        } else if (path.startsWith("/email-alerts/")) {
+            // ✅ Day 89-90 — SECURITY FIX: every endpoint under /email-alerts
+            // lets any authenticated user trigger a real email send to
+            // themselves with zero rate limiting. Not a data-leak risk
+            // (users can only spam their own inbox), but a real resource-
+            // abuse risk: unrestricted use could exhaust Gmail SMTP quota
+            // or get the sending account flagged for abuse, degrading
+            // email delivery for every user. Limited to 10 email sends
+            // per 10 minutes per IP — enough for legitimate testing/use,
+            // not enough to meaningfully abuse the quota.
+            allowed = rateLimiterService.allowRequest(ip + "_email_alerts", 10, 600_000);
         }
 
         if (!allowed) {

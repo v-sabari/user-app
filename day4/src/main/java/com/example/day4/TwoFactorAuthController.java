@@ -2,6 +2,7 @@ package com.example.day4;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -10,7 +11,12 @@ import java.util.Optional;
 
 /**
  * ✅ Day 81 — Two Factor Authentication Controller
- * REST endpoints for TOTP, SMS, and backup codes
+ *
+ * ✅ Day 89-90 — SECURITY FIX: /2fa/disable previously accepted a password
+ * field but never verified it against the user's real password — the
+ * original code had a comment literally saying "In production, verify
+ * password here" and never did. Fixed using the same passwordEncoder
+ * pattern already proven correct in UserProfileService.
  */
 @RestController
 @RequestMapping("/2fa")
@@ -21,24 +27,23 @@ public class TwoFactorAuthController {
     private final UserRepository userRepository;
     private final AuditLogService auditLogService;
     private final SmsService smsService;
+    private final PasswordEncoder passwordEncoder;
 
     public TwoFactorAuthController(
             TwoFactorAuthService twoFactorAuthService,
             UserRepository userRepository,
             AuditLogService auditLogService,
-            SmsService smsService
+            SmsService smsService,
+            PasswordEncoder passwordEncoder
     ) {
         this.twoFactorAuthService = twoFactorAuthService;
         this.userRepository = userRepository;
         this.auditLogService = auditLogService;
         this.smsService = smsService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     // ================= GET 2FA STATUS =================
-    /**
-     * GET /2fa/status
-     * Get current user's 2FA status
-     */
     @GetMapping("/status")
     public ResponseEntity<?> get2FAStatus(Authentication auth) {
         String email = auth.getName();
@@ -67,10 +72,6 @@ public class TwoFactorAuthController {
     }
 
     // ================= GENERATE TOTP SECRET =================
-    /**
-     * POST /2fa/totp/generate
-     * Generate new TOTP secret and QR code
-     */
     @PostMapping("/totp/generate")
     public ResponseEntity<?> generateTotpSecret(Authentication auth) {
         String email = auth.getName();
@@ -117,10 +118,6 @@ public class TwoFactorAuthController {
     }
 
     // ================= VERIFY & ENABLE TOTP =================
-    /**
-     * POST /2fa/totp/enable
-     * Verify TOTP code and enable 2FA
-     */
     @PostMapping("/totp/enable")
     public ResponseEntity<?> enableTotpAuth(
             @RequestBody Map<String, Object> request,
@@ -143,7 +140,6 @@ public class TwoFactorAuthController {
                     .body(Map.of("success", false, "message", "Missing totpSecret or totpCode"));
         }
 
-        // Verify TOTP code
         if (!twoFactorAuthService.verifyTotpCode(totpSecret, totpCode)) {
             auditLogService.log(
                     email,
@@ -158,10 +154,8 @@ public class TwoFactorAuthController {
                     .body(Map.of("success", false, "message", "Invalid TOTP code"));
         }
 
-        // Generate backup codes
         List<String> backupCodes = twoFactorAuthService.generateBackupCodes();
 
-        // Enable 2FA
         twoFactorAuthService.enableTwoFactorAuth(user, totpSecret, backupCodes);
 
         auditLogService.log(
@@ -183,10 +177,6 @@ public class TwoFactorAuthController {
     }
 
     // ================= VERIFY TOTP CODE (FOR LOGIN) =================
-    /**
-     * POST /2fa/totp/verify
-     * Verify TOTP code during login
-     */
     @PostMapping("/totp/verify")
     public ResponseEntity<?> verifyTotpCode(
             @RequestBody Map<String, Object> request,
@@ -225,10 +215,6 @@ public class TwoFactorAuthController {
     }
 
     // ================= VERIFY BACKUP CODE =================
-    /**
-     * POST /2fa/backup/verify
-     * Verify backup code
-     */
     @PostMapping("/backup/verify")
     public ResponseEntity<?> verifyBackupCode(
             @RequestBody Map<String, Object> request,
@@ -270,10 +256,6 @@ public class TwoFactorAuthController {
     }
 
     // ================= SETUP SMS =================
-    /**
-     * POST /2fa/sms/setup
-     * Enable SMS verification
-     */
     @PostMapping("/sms/setup")
     public ResponseEntity<?> setupSms(
             @RequestBody Map<String, Object> request,
@@ -320,8 +302,13 @@ public class TwoFactorAuthController {
 
     // ================= DISABLE 2FA =================
     /**
-     * POST /2fa/disable
-     * Disable all 2FA methods
+     * ✅ Day 89-90 — SECURITY FIX: now actually verifies the submitted
+     * password against the user's real stored password using
+     * passwordEncoder.matches() — the same pattern UserProfileService
+     * already uses correctly for changePassword/updateEmail/deleteAccount.
+     * Previously this only checked a password field was present, not that
+     * it was correct, meaning a stolen session token alone was enough to
+     * strip 2FA protection from an account.
      */
     @PostMapping("/disable")
     public ResponseEntity<?> disableTwoFactorAuth(
@@ -344,7 +331,22 @@ public class TwoFactorAuthController {
                     .body(Map.of("success", false, "message", "Password is required for confirmation"));
         }
 
-        // In production, verify password here
+        // ✅ Day 89-90 — Real verification, mirrors UserProfileService exactly
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+
+            auditLogService.log(
+                    email,
+                    user.getRole(),
+                    "DISABLE_2FA",
+                    email,
+                    "FAILED",
+                    "Incorrect password provided — 2FA disable blocked"
+            );
+
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "message", "Incorrect password. 2FA disable cancelled."));
+        }
+
         twoFactorAuthService.disableTwoFactorAuth(user);
 
         auditLogService.log(

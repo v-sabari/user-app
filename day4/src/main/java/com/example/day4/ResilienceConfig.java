@@ -111,7 +111,7 @@ public class ResilienceConfig {
     public Retry databaseRetry(RetryRegistry registry) {
         RetryConfig config = RetryConfig.custom()
                 .maxAttempts(3)
-                .waitDuration(Duration.ofMillis(1000))
+
                 .intervalFunction(IntervalFunction.ofExponentialBackoff(1000, 2))
                 .retryOnException(e -> !(e instanceof IllegalArgumentException))
                 .build();
@@ -130,11 +130,11 @@ public class ResilienceConfig {
      * Retries 2 times with fixed delay for external API calls
      */
     @Bean
+
     public Retry apiRetry(RetryRegistry registry) {
         RetryConfig config = RetryConfig.custom()
                 .maxAttempts(2)
-                .waitDuration(Duration.ofMillis(500))
-                .intervalFunction(IntervalFunction.of(Duration.ofSeconds(1)))
+                .intervalFunction(IntervalFunction.ofExponentialBackoff(500, 1.5))
                 .retryOnException(e -> !(e instanceof IllegalArgumentException))
                 .build();
 

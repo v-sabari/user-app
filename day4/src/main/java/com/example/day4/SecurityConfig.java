@@ -55,10 +55,6 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
 
-                // ✅ Day 86-87 — Centralized CORS, wired into the security chain.
-                // This replaces the need for @CrossOrigin on every individual
-                // controller. Existing @CrossOrigin annotations on controllers
-                // can stay (they don't conflict) but are now redundant.
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
                 .sessionManagement(session ->
@@ -74,6 +70,11 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
+                        // ✅ ADD THIS - Health endpoint for monitoring
+                        .requestMatchers(
+                                "/api/health", "/api/health/**"
+                        ).permitAll()
+
                         .requestMatchers(
                                 "/auth/**"
                         ).permitAll()
@@ -86,7 +87,6 @@ public class SecurityConfig {
                                 "/security-dashboard/**"
                         ).hasRole("ADMIN")
 
-                        // ✅ Day 55 — Admin sessions manager
                         .requestMatchers(
                                 "/admin/**"
                         ).hasRole("ADMIN")

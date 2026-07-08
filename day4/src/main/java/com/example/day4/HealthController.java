@@ -13,6 +13,6 @@ public class HealthController {
 
     @GetMapping({"/health", "/api/health"})   // ← ADDED /health alias
     public ResponseEntity<String> health() {
-        return ResponseEntity.ok("ResumeForge AI backend is running");
+        return ResponseEntity.ok("User management backend is running");
     }
 }

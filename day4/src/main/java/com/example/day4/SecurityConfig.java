@@ -72,7 +72,10 @@ public class SecurityConfig {
 
                         // ✅ ADD THIS - Health endpoint for monitoring
                         .requestMatchers(
-                                "/api/health", "/api/health/**"
+                                "/health",
+                                "/health/**",
+                                "/api/health",
+                                "/api/health/**"
                         ).permitAll()
 
                         .requestMatchers(

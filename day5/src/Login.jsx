@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { publicRequest, apiRequest } from "./apiClient";
+import { Button, Banner, AuthMark } from "./ui";
 
 /**
  * ✅ Day 81 — Updated Login with 2FA Support
@@ -139,211 +140,153 @@ function Login() {
 
   // ================= UI =================
   return (
-    <div className="auth-page">
-      <div className="card auth-card">
+    <div className="auth-screen">
+      <div className="auth-shell">
+        <AuthMark />
+        <div className="auth-panel">
 
-        {/* ===== NORMAL LOGIN ===== */}
-        {!twoFactorRequired && (
-          <>
-            <h2>Login</h2>
-            <p style={{ color: "#6b7280", marginBottom: "20px", fontSize: "14px" }}>
-              Access your account securely
-            </p>
+          {/* ===== NORMAL LOGIN ===== */}
+          {!twoFactorRequired && (
+            <>
+              <h2>Welcome back</h2>
+              <p className="auth-subtitle">Access your account securely</p>
 
-            <form onSubmit={handleSubmit}>
-              <input
-                type="email"
-                name="email"
-                placeholder="Enter email"
-                value={form.email}
-                onChange={handleChange}
-                required
-              />
-
-              <input
-                type="password"
-                name="password"
-                placeholder="Enter password"
-                value={form.password}
-                onChange={handleChange}
-                required
-              />
-
-              <button type="submit" disabled={loading}>
-                {loading ? "Logging in..." : "Login"}
-              </button>
-            </form>
-
-            {message && (
-              <div
-                style={{
-                  marginTop: "16px",
-                  padding: "12px",
-                  borderRadius: "8px",
-                  background:
-                    message.toLowerCase().includes("locked") ? "#fee2e2" : "#fef3c7",
-                  color:
-                    message.toLowerCase().includes("locked") ? "#b91c1c" : "#92400e",
-                  border:
-                    message.toLowerCase().includes("locked")
-                      ? "1px solid #fca5a5"
-                      : "1px solid #fde68a",
-                  fontSize: "14px",
-                  lineHeight: "1.5",
-                }}
-              >
-                {message}
-              </div>
-            )}
-
-            <p className="auth-link">
-              <Link to="/forgot-password">Forgot Password?</Link>
-            </p>
-
-            <p className="auth-link">
-              Don&apos;t have an account?{" "}
-              <Link to="/register">Register</Link>
-            </p>
-          </>
-        )}
-
-        {/* ✅ Day 81 — 2FA VERIFICATION ===== */}
-        {twoFactorRequired && (
-          <>
-            <h2>🔐 Two-Factor Authentication</h2>
-            <p style={{ color: "#6b7280", marginBottom: "20px", fontSize: "14px" }}>
-              Enter your 2FA code to complete login
-            </p>
-
-            <form onSubmit={handleVerify2FA}>
-              {/* ===== 2FA TYPE SELECTOR ===== */}
-              <div style={{ marginBottom: "16px", display: "flex", gap: "8px" }}>
-                <button
-                  type="button"
-                  onClick={() => setTwoFactorType("totp")}
-                  style={{
-                    flex: 1,
-                    padding: "10px",
-                    borderRadius: "6px",
-                    border: twoFactorType === "totp" ? "2px solid #2563eb" : "1px solid #d1d5db",
-                    background: twoFactorType === "totp" ? "#eff6ff" : "#f9fafb",
-                    color: twoFactorType === "totp" ? "#2563eb" : "#6b7280",
-                    fontSize: "13px",
-                    fontWeight: "600",
-                    cursor: "pointer",
-                  }}
-                >
-                  📱 Authenticator
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTwoFactorType("backup")}
-                  style={{
-                    flex: 1,
-                    padding: "10px",
-                    borderRadius: "6px",
-                    border: twoFactorType === "backup" ? "2px solid #2563eb" : "1px solid #d1d5db",
-                    background: twoFactorType === "backup" ? "#eff6ff" : "#f9fafb",
-                    color: twoFactorType === "backup" ? "#2563eb" : "#6b7280",
-                    fontSize: "13px",
-                    fontWeight: "600",
-                    cursor: "pointer",
-                  }}
-                >
-                  🔑 Backup Code
-                </button>
-              </div>
-
-              {/* ===== 2FA CODE INPUT ===== */}
-              {twoFactorType === "totp" ? (
-                <>
-                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", marginBottom: "6px" }}>
-                    6-Digit Code
-                  </label>
+              <form onSubmit={handleSubmit}>
+                <div className="auth-field">
+                  <label htmlFor="login-email">Email</label>
                   <input
-                    type="text"
-                    placeholder="000000"
-                    value={twoFactorCode}
-                    onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    maxLength="6"
-                    style={{
-                      fontSize: "24px",
-                      textAlign: "center",
-                      letterSpacing: "8px",
-                      fontWeight: "600",
-                      padding: "12px",
-                    }}
+                    id="login-email"
+                    type="email"
+                    name="email"
+                    placeholder="you@company.com"
+                    value={form.email}
+                    onChange={handleChange}
                     required
-                    autoFocus
+                    autoComplete="email"
                   />
-                </>
-              ) : (
-                <>
-                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", marginBottom: "6px" }}>
-                    Backup Code
-                  </label>
+                </div>
+
+                <div className="auth-field">
+                  <label htmlFor="login-password">Password</label>
                   <input
-                    type="text"
-                    placeholder="Enter 8-character backup code"
-                    value={twoFactorCode}
-                    onChange={(e) => setTwoFactorCode(e.target.value.toUpperCase())}
-                    maxLength="8"
+                    id="login-password"
+                    type="password"
+                    name="password"
+                    placeholder="Enter password"
+                    value={form.password}
+                    onChange={handleChange}
                     required
-                    autoFocus
+                    autoComplete="current-password"
                   />
-                </>
+                </div>
+
+                <Button type="submit" variant="primary" block disabled={loading}>
+                  {loading ? "Logging in…" : "Log in"}
+                </Button>
+              </form>
+
+              {message && (
+                <div style={{ marginTop: "16px" }}>
+                  <Banner tone={message.toLowerCase().includes("locked") ? "danger" : "warning"}>
+                    {message}
+                  </Banner>
+                </div>
               )}
 
-              <button type="submit" disabled={twoFactorLoading} style={{ marginTop: "16px" }}>
-                {twoFactorLoading ? "Verifying..." : "✅ Verify"}
-              </button>
-            </form>
-
-            {message && (
-              <div
-                style={{
-                  marginTop: "16px",
-                  padding: "12px",
-                  borderRadius: "8px",
-                  background: message.includes("Invalid") ? "#fee2e2" : "#dcfce7",
-                  color: message.includes("Invalid") ? "#b91c1c" : "#15803d",
-                  border: message.includes("Invalid") ? "1px solid #fca5a5" : "1px solid #86efac",
-                  fontSize: "14px",
-                }}
-              >
-                {message}
+              <div className="auth-links">
+                <Link to="/forgot-password">Forgot password?</Link>
+                <span>
+                  Don&apos;t have an account? <Link to="/register">Register</Link>
+                </span>
               </div>
-            )}
+            </>
+          )}
 
-            <p
-              style={{
-                marginTop: "20px",
-                textAlign: "center",
-                fontSize: "13px",
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  setTwoFactorRequired(false);
-                  setTwoFactorCode("");
-                  setMessage("");
-                  setTempToken(null);
-                }}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "#2563eb",
-                  cursor: "pointer",
-                  textDecoration: "underline",
-                  fontSize: "13px",
-                }}
-              >
-                ← Back to Login
-              </button>
-            </p>
-          </>
-        )}
+          {/* ✅ Day 81 — 2FA VERIFICATION ===== */}
+          {twoFactorRequired && (
+            <>
+              <h2>🔐 Two-factor authentication</h2>
+              <p className="auth-subtitle">Enter your 2FA code to complete login</p>
+
+              <form onSubmit={handleVerify2FA}>
+                {/* ===== 2FA TYPE SELECTOR ===== */}
+                <div className="pill-toggle">
+                  <button
+                    type="button"
+                    className={twoFactorType === "totp" ? "is-active" : ""}
+                    onClick={() => setTwoFactorType("totp")}
+                  >
+                    📱 Authenticator
+                  </button>
+                  <button
+                    type="button"
+                    className={twoFactorType === "backup" ? "is-active" : ""}
+                    onClick={() => setTwoFactorType("backup")}
+                  >
+                    🔑 Backup Code
+                  </button>
+                </div>
+
+                {/* ===== 2FA CODE INPUT ===== */}
+                {twoFactorType === "totp" ? (
+                  <div className="auth-field">
+                    <label>6-Digit Code</label>
+                    <input
+                      type="text"
+                      placeholder="000000"
+                      value={twoFactorCode}
+                      onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      maxLength="6"
+                      className="code-input"
+                      required
+                      autoFocus
+                    />
+                  </div>
+                ) : (
+                  <div className="auth-field">
+                    <label>Backup Code</label>
+                    <input
+                      type="text"
+                      placeholder="Enter 8-character backup code"
+                      value={twoFactorCode}
+                      onChange={(e) => setTwoFactorCode(e.target.value.toUpperCase())}
+                      maxLength="8"
+                      required
+                      autoFocus
+                    />
+                  </div>
+                )}
+
+                <Button type="submit" variant="primary" block disabled={twoFactorLoading}>
+                  {twoFactorLoading ? "Verifying…" : "✅ Verify"}
+                </Button>
+              </form>
+
+              {message && (
+                <div style={{ marginTop: "16px" }}>
+                  <Banner tone={message.includes("Invalid") ? "danger" : "success"}>
+                    {message}
+                  </Banner>
+                </div>
+              )}
+
+              <div className="auth-links">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTwoFactorRequired(false);
+                    setTwoFactorCode("");
+                    setMessage("");
+                    setTempToken(null);
+                  }}
+                  style={{ background: "none", border: "none", color: "var(--primary)", cursor: "pointer", fontWeight: 600, fontSize: "13.5px" }}
+                >
+                  ← Back to login
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

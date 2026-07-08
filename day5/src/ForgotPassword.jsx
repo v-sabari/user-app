@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { publicRequest } from "./apiClient";
+import { Button, Banner, AuthMark } from "./ui";
 
 function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -48,87 +49,72 @@ function ForgotPassword() {
 
   // ================= RENDER =================
   return (
-    <div className="auth-page">
-      <div className="card auth-card">
+    <div className="auth-screen">
+      <div className="auth-shell">
+        <AuthMark />
+        <div className="auth-panel">
 
-        <h2>Forgot Password</h2>
+          <h2>Forgot password</h2>
+          <p className="auth-subtitle">Enter your email and we&apos;ll send you a reset link.</p>
 
-        <p style={{ color: "#6b7280", marginBottom: "20px", fontSize: "14px" }}>
-          Enter your email and we'll send you a reset link.
-        </p>
+          {/* ===== SUCCESS STATE ===== */}
+          {submitted ? (
+            <>
+              <Banner tone="success">
+                <p style={{ margin: "0 0 6px", fontWeight: "700", fontSize: "15px" }}>
+                  ✅ Check your inbox
+                </p>
+                <p style={{ margin: 0 }}>{message}</p>
+              </Banner>
 
-        {/* ===== SUCCESS STATE ===== */}
-        {submitted ? (
-          <>
-            <div
-              style={{
-                padding: "16px",
-                borderRadius: "10px",
-                background: "#dcfce7",
-                color: "#15803d",
-                border: "1px solid #86efac",
-                fontSize: "14px",
-                lineHeight: "1.6",
-                marginBottom: "20px",
-              }}
-            >
-              <p style={{ margin: "0 0 6px", fontWeight: "700", fontSize: "15px" }}>
-                ✅ Check your inbox
-              </p>
-              <p style={{ margin: 0 }}>{message}</p>
+              <div style={{ marginTop: "16px" }}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  block
+                  onClick={() => { setSubmitted(false); setMessage(""); }}
+                >
+                  Send another link
+                </Button>
+              </div>
+            </>
+          ) : (
+            <form onSubmit={handleSubmit}>
+              <div className="auth-field">
+                <label htmlFor="forgot-email">Email address</label>
+                <input
+                  id="forgot-email"
+                  type="email"
+                  placeholder="you@company.com"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setError("");
+                  }}
+                  required
+                  autoComplete="email"
+                  autoFocus
+                />
+              </div>
+
+              <Button type="submit" variant="primary" block disabled={loading}>
+                {loading ? "Sending…" : "Send reset link"}
+              </Button>
+            </form>
+          )}
+
+          {/* ===== ERROR MESSAGE ===== */}
+          {error && (
+            <div style={{ marginTop: "16px" }}>
+              <Banner tone="danger">{error}</Banner>
             </div>
+          )}
 
-            <button
-              type="button"
-              onClick={() => { setSubmitted(false); setMessage(""); }}
-              style={{ background: "#6b7280", marginBottom: "4px" }}
-            >
-              Send Another Link
-            </button>
-          </>
-        ) : (
-          <form onSubmit={handleSubmit}>
-            <input
-              type="email"
-              placeholder="Enter your email address"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setError("");
-              }}
-              required
-              autoComplete="email"
-              autoFocus
-            />
-
-            <button type="submit" disabled={loading}>
-              {loading ? "Sending..." : "Send Reset Link"}
-            </button>
-          </form>
-        )}
-
-        {/* ===== ERROR MESSAGE ===== */}
-        {error && (
-          <div
-            style={{
-              marginTop: "16px",
-              padding: "12px",
-              borderRadius: "8px",
-              background: "#fee2e2",
-              color: "#b91c1c",
-              border: "1px solid #fca5a5",
-              fontSize: "14px",
-              lineHeight: "1.5",
-            }}
-          >
-            {error}
+          <div className="auth-links">
+            <Link to="/login">← Back to login</Link>
           </div>
-        )}
 
-        <p className="auth-link">
-          <Link to="/login">← Back to Login</Link>
-        </p>
-
+        </div>
       </div>
     </div>
   );

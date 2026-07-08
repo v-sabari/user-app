@@ -1,21 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { publicRequest } from "./apiClient";
-
-// ================= PASSWORD STRENGTH =================
-const getPasswordStrength = (password) => {
-  if (!password) return { score: 0, label: "", color: "" };
-  let score = 0;
-  if (password.length >= 6) score++;
-  if (password.length >= 10) score++;
-  if (/[A-Z]/.test(password)) score++;
-  if (/[0-9]/.test(password)) score++;
-  if (/[^A-Za-z0-9]/.test(password)) score++;
-  if (score <= 1) return { score: 1, label: "Weak", color: "#dc2626" };
-  if (score === 2) return { score: 2, label: "Fair", color: "#d97706" };
-  if (score === 3) return { score: 3, label: "Good", color: "#2563eb" };
-  return { score: 4, label: "Strong", color: "#16a34a" };
-};
+import { Button, Banner, AuthMark, PasswordStrengthMeter, MatchHint } from "./ui";
 
 function ResetPassword() {
   const navigate = useNavigate();
@@ -32,8 +18,6 @@ function ResetPassword() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-
-  const strength = getPasswordStrength(form.newPassword);
 
   // ================= INPUT CHANGE =================
   const handleChange = (e) => {
@@ -94,144 +78,102 @@ function ResetPassword() {
 
   // ================= RENDER =================
   return (
-    <div className="auth-page">
-      <div className="card auth-card">
+    <div className="auth-screen">
+      <div className="auth-shell">
+        <AuthMark />
+        <div className="auth-panel">
 
-        <h2>Reset Password</h2>
+          <h2>Reset password</h2>
+          <p className="auth-subtitle">Enter your new password below.</p>
 
-        <p style={{ color: "#6b7280", marginBottom: "20px", fontSize: "14px" }}>
-          Enter your new password below.
-        </p>
-
-        {/* ===== SUCCESS STATE ===== */}
-        {success ? (
-          <div
-            style={{
-              padding: "16px",
-              borderRadius: "10px",
-              background: "#dcfce7",
-              color: "#15803d",
-              border: "1px solid #86efac",
-              fontSize: "14px",
-              lineHeight: "1.6",
-            }}
-          >
-            <p style={{ margin: "0 0 6px", fontWeight: "700", fontSize: "15px" }}>
-              ✅ Password reset successfully
-            </p>
-            <p style={{ margin: 0 }}>
-              {message} Redirecting to login...
-            </p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit}>
-
-            {/* ===== TOKEN (show only if not in URL) ===== */}
-            {!tokenFromUrl && (
-              <input
-                type="text"
-                name="token"
-                placeholder="Paste reset token from email"
-                value={form.token}
-                onChange={handleChange}
-                required
-                autoComplete="off"
-              />
-            )}
-
-            {/* ===== NEW PASSWORD ===== */}
-            <input
-              type="password"
-              name="newPassword"
-              placeholder="New password (min 6 characters)"
-              value={form.newPassword}
-              onChange={handleChange}
-              required
-              minLength={6}
-              autoComplete="new-password"
-            />
-
-            {/* ===== PASSWORD STRENGTH ===== */}
-            {form.newPassword.length > 0 && (
-              <div style={{ marginTop: "-8px", marginBottom: "12px" }}>
-                <div style={{ display: "flex", gap: "4px", marginBottom: "5px" }}>
-                  {[1, 2, 3, 4].map((level) => (
-                    <div
-                      key={level}
-                      style={{
-                        flex: 1,
-                        height: "4px",
-                        borderRadius: "999px",
-                        background: strength.score >= level ? strength.color : "#e5e7eb",
-                        transition: "background 0.3s ease",
-                      }}
-                    />
-                  ))}
-                </div>
-                <p style={{ margin: 0, fontSize: "12px", fontWeight: "600", color: strength.color }}>
-                  {strength.label} password
-                </p>
-              </div>
-            )}
-
-            {/* ===== CONFIRM PASSWORD ===== */}
-            <input
-              type="password"
-              name="confirmPassword"
-              placeholder="Confirm new password"
-              value={form.confirmPassword}
-              onChange={handleChange}
-              required
-              minLength={6}
-              autoComplete="new-password"
-            />
-
-            {/* ===== MATCH INDICATOR ===== */}
-            {form.confirmPassword.length > 0 && (
-              <p
-                style={{
-                  margin: "-8px 0 12px",
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  color: form.newPassword === form.confirmPassword ? "#16a34a" : "#dc2626",
-                }}
-              >
-                {form.newPassword === form.confirmPassword
-                  ? "✅ Passwords match"
-                  : "❌ Passwords do not match"}
+          {/* ===== SUCCESS STATE ===== */}
+          {success ? (
+            <Banner tone="success">
+              <p style={{ margin: "0 0 6px", fontWeight: "700", fontSize: "15px" }}>
+                ✅ Password reset successfully
               </p>
-            )}
+              <p style={{ margin: 0 }}>
+                {message} Redirecting to login...
+              </p>
+            </Banner>
+          ) : (
+            <form onSubmit={handleSubmit}>
 
-            <button type="submit" disabled={loading}>
-              {loading ? "Resetting..." : "Reset Password"}
-            </button>
-          </form>
-        )}
+              {/* ===== TOKEN (show only if not in URL) ===== */}
+              {!tokenFromUrl && (
+                <div className="auth-field">
+                  <label htmlFor="reset-token">Reset token</label>
+                  <input
+                    id="reset-token"
+                    type="text"
+                    name="token"
+                    placeholder="Paste reset token from email"
+                    value={form.token}
+                    onChange={handleChange}
+                    required
+                    autoComplete="off"
+                  />
+                </div>
+              )}
 
-        {/* ===== ERROR MESSAGE ===== */}
-        {error && (
-          <div
-            style={{
-              marginTop: "16px",
-              padding: "12px",
-              borderRadius: "8px",
-              background: "#fee2e2",
-              color: "#b91c1c",
-              border: "1px solid #fca5a5",
-              fontSize: "14px",
-              lineHeight: "1.5",
-            }}
-          >
-            {error}
-          </div>
-        )}
+              {/* ===== NEW PASSWORD ===== */}
+              <div className="auth-field">
+                <label htmlFor="reset-password">New password</label>
+                <input
+                  id="reset-password"
+                  type="password"
+                  name="newPassword"
+                  placeholder="Min 6 characters"
+                  value={form.newPassword}
+                  onChange={handleChange}
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                />
+              </div>
 
-        {!success && (
-          <p className="auth-link">
-            <Link to="/login">← Back to Login</Link>
-          </p>
-        )}
+              <PasswordStrengthMeter password={form.newPassword} />
 
+              {/* ===== CONFIRM PASSWORD ===== */}
+              <div className="auth-field">
+                <label htmlFor="reset-confirm">Confirm new password</label>
+                <input
+                  id="reset-confirm"
+                  type="password"
+                  name="confirmPassword"
+                  placeholder="Re-enter new password"
+                  value={form.confirmPassword}
+                  onChange={handleChange}
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                />
+              </div>
+
+              {form.confirmPassword.length > 0 && (
+                <MatchHint matches={form.newPassword === form.confirmPassword} />
+              )}
+
+              <Button type="submit" variant="primary" block disabled={loading}>
+                {loading ? "Resetting…" : "Reset password"}
+              </Button>
+            </form>
+          )}
+
+          {/* ===== ERROR MESSAGE ===== */}
+          {error && (
+            <div style={{ marginTop: "16px" }}>
+              <Banner tone="danger">{error}</Banner>
+            </div>
+          )}
+
+          {!success && (
+            <div className="auth-links">
+              <Link to="/login">← Back to login</Link>
+            </div>
+          )}
+
+        </div>
       </div>
     </div>
   );

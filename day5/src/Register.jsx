@@ -1,24 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { publicRequest } from "./apiClient";
-
-// ================= PASSWORD STRENGTH =================
-const getPasswordStrength = (password) => {
-  if (!password) return { score: 0, label: "", color: "" };
-
-  let score = 0;
-
-  if (password.length >= 6) score++;
-  if (password.length >= 10) score++;
-  if (/[A-Z]/.test(password)) score++;
-  if (/[0-9]/.test(password)) score++;
-  if (/[^A-Za-z0-9]/.test(password)) score++;
-
-  if (score <= 1) return { score: 1, label: "Weak", color: "#dc2626" };
-  if (score === 2) return { score: 2, label: "Fair", color: "#d97706" };
-  if (score === 3) return { score: 3, label: "Good", color: "#2563eb" };
-  return { score: 4, label: "Strong", color: "#16a34a" };
-};
+import { Button, Banner, AuthMark, PasswordStrengthMeter, MatchHint } from "./ui";
 
 function Register() {
   const navigate = useNavigate();
@@ -33,8 +16,6 @@ function Register() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const strength = getPasswordStrength(form.password);
 
   // ================= INPUT CHANGE =================
   const handleChange = (e) => {
@@ -92,175 +73,114 @@ function Register() {
 
   // ================= RENDER =================
   return (
-    <div className="auth-page">
-      <div className="card auth-card">
+    <div className="auth-screen">
+      <div className="auth-shell">
+        <AuthMark />
+        <div className="auth-panel">
 
-        <h2>Create Account</h2>
+          <h2>Create your account</h2>
+          <p className="auth-subtitle">Join and get started in seconds</p>
 
-        <p style={{ color: "#6b7280", marginBottom: "20px", fontSize: "14px" }}>
-          Join and get started in seconds
-        </p>
+          <form onSubmit={handleSubmit}>
 
-        <form onSubmit={handleSubmit}>
+            {/* ===== NAME ===== */}
+            <div className="auth-field">
+              <label htmlFor="reg-name">Full name</label>
+              <input
+                id="reg-name"
+                type="text"
+                name="name"
+                placeholder="Jane Doe"
+                value={form.name}
+                onChange={handleChange}
+                required
+                minLength={2}
+                maxLength={50}
+                autoComplete="name"
+              />
+            </div>
 
-          {/* ===== NAME ===== */}
-          <input
-            type="text"
-            name="name"
-            placeholder="Full name"
-            value={form.name}
-            onChange={handleChange}
-            required
-            minLength={2}
-            maxLength={50}
-            autoComplete="name"
-          />
+            {/* ===== EMAIL ===== */}
+            <div className="auth-field">
+              <label htmlFor="reg-email">Email address</label>
+              <input
+                id="reg-email"
+                type="email"
+                name="email"
+                placeholder="you@company.com"
+                value={form.email}
+                onChange={handleChange}
+                required
+                autoComplete="email"
+              />
+            </div>
 
-          {/* ===== EMAIL ===== */}
-          <input
-            type="email"
-            name="email"
-            placeholder="Email address"
-            value={form.email}
-            onChange={handleChange}
-            required
-            autoComplete="email"
-          />
+            {/* ===== PASSWORD ===== */}
+            <div className="auth-field">
+              <label htmlFor="reg-password">Password</label>
+              <input
+                id="reg-password"
+                type="password"
+                name="password"
+                placeholder="Min 6 characters"
+                value={form.password}
+                onChange={handleChange}
+                required
+                minLength={6}
+                autoComplete="new-password"
+              />
+            </div>
 
-          {/* ===== PASSWORD ===== */}
-          <input
-            type="password"
-            name="password"
-            placeholder="Password (min 6 characters)"
-            value={form.password}
-            onChange={handleChange}
-            required
-            minLength={6}
-            autoComplete="new-password"
-          />
+            <PasswordStrengthMeter password={form.password} />
 
-          {/* ===== DAY 60 — PASSWORD STRENGTH INDICATOR ===== */}
-          {form.password.length > 0 && (
-            <div style={{ marginTop: "-8px", marginBottom: "12px" }}>
+            {/* ===== CONFIRM PASSWORD ===== */}
+            <div className="auth-field">
+              <label htmlFor="reg-confirm">Confirm password</label>
+              <input
+                id="reg-confirm"
+                type="password"
+                name="confirmPassword"
+                placeholder="Re-enter password"
+                value={form.confirmPassword}
+                onChange={handleChange}
+                required
+                minLength={6}
+                autoComplete="new-password"
+              />
+            </div>
 
-              {/* Strength bar */}
-              <div
-                style={{
-                  display: "flex",
-                  gap: "4px",
-                  marginBottom: "5px",
-                }}
-              >
-                {[1, 2, 3, 4].map((level) => (
-                  <div
-                    key={level}
-                    style={{
-                      flex: 1,
-                      height: "4px",
-                      borderRadius: "999px",
-                      background:
-                        strength.score >= level
-                          ? strength.color
-                          : "#e5e7eb",
-                      transition: "background 0.3s ease",
-                    }}
-                  />
-                ))}
-              </div>
+            {form.confirmPassword.length > 0 && (
+              <MatchHint matches={form.password === form.confirmPassword} />
+            )}
 
-              {/* Strength label */}
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  color: strength.color,
-                }}
-              >
-                {strength.label} password
-              </p>
+            {/* ===== REGISTER BUTTON ===== */}
+            <Button type="submit" variant="primary" block disabled={loading}>
+              {loading ? "Creating account…" : "Create account"}
+            </Button>
+
+          </form>
+
+          {/* ===== SUCCESS MESSAGE ===== */}
+          {message && (
+            <div style={{ marginTop: "16px" }}>
+              <Banner tone="success">{message}</Banner>
             </div>
           )}
 
-          {/* ===== CONFIRM PASSWORD ===== */}
-          <input
-            type="password"
-            name="confirmPassword"
-            placeholder="Confirm password"
-            value={form.confirmPassword}
-            onChange={handleChange}
-            required
-            minLength={6}
-            autoComplete="new-password"
-          />
-
-          {/* ✅ Confirm match indicator */}
-          {form.confirmPassword.length > 0 && (
-            <p
-              style={{
-                margin: "-8px 0 12px",
-                fontSize: "12px",
-                fontWeight: "600",
-                color:
-                  form.password === form.confirmPassword
-                    ? "#16a34a"
-                    : "#dc2626",
-              }}
-            >
-              {form.password === form.confirmPassword
-                ? "✅ Passwords match"
-                : "❌ Passwords do not match"}
-            </p>
+          {/* ===== ERROR MESSAGE ===== */}
+          {error && (
+            <div style={{ marginTop: "16px" }}>
+              <Banner tone="danger">{error}</Banner>
+            </div>
           )}
 
-          {/* ===== REGISTER BUTTON ===== */}
-          <button type="submit" disabled={loading}>
-            {loading ? "Creating account..." : "Create Account"}
-          </button>
-
-        </form>
-
-        {/* ===== SUCCESS MESSAGE ===== */}
-        {message && (
-          <div
-            style={{
-              marginTop: "16px",
-              padding: "12px",
-              borderRadius: "8px",
-              background: "#dcfce7",
-              color: "#15803d",
-              border: "1px solid #86efac",
-              fontSize: "14px",
-              lineHeight: "1.5",
-            }}
-          >
-            {message}
+          <div className="auth-links">
+            <span>
+              Already have an account? <Link to="/login">Log in</Link>
+            </span>
           </div>
-        )}
 
-        {/* ===== ERROR MESSAGE ===== */}
-        {error && (
-          <div
-            style={{
-              marginTop: "16px",
-              padding: "12px",
-              borderRadius: "8px",
-              background: "#fee2e2",
-              color: "#b91c1c",
-              border: "1px solid #fca5a5",
-              fontSize: "14px",
-              lineHeight: "1.5",
-            }}
-          >
-            {error}
-          </div>
-        )}
-
-        <p className="auth-link">
-          Already have an account?{" "}
-          <Link to="/login">Login</Link>
-        </p>
-
+        </div>
       </div>
     </div>
   );

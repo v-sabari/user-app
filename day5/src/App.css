@@ -4,10 +4,16 @@
 
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: linear-gradient(135deg, #eef2ff, #f8fafc);
+  font-family: var(--font-ui, Arial, sans-serif);
+  background: var(--canvas, linear-gradient(135deg, #eef2ff, #f8fafc));
   min-height: 100vh;
-  color: #111827;
+  color: var(--ink, #111827);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--primary-ring, rgba(79, 70, 229, 0.18));
 }
 
 button,

@@ -1,0 +1,303 @@
+/* ============================================================
+   SHARED UI COMPONENTS
+   Presentational styles for Button, Banner, and other primitives
+   consumed via ui.jsx. Pages import these instead of redefining
+   ad-hoc styles per file.
+   ============================================================ */
+
+/* ---------- Button ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 11px 18px;
+  border-radius: var(--r-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
+  white-space: nowrap;
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--primary-ring);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
+.btn-block { width: 100%; }
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: var(--shadow-xs);
+}
+.btn-primary:hover:not(:disabled) { background: var(--primary-dark); }
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--ink-soft);
+  border-color: var(--line-strong);
+}
+.btn-secondary:hover:not(:disabled) { background: var(--surface-sunken); border-color: var(--faint); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+}
+.btn-ghost:hover:not(:disabled) { background: var(--surface-sunken); color: var(--ink-soft); }
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+.btn-danger:hover:not(:disabled) { background: var(--danger-dark); }
+
+.btn-success {
+  background: var(--success);
+  color: #fff;
+}
+.btn-success:hover:not(:disabled) { background: var(--success-dark); }
+
+.btn-dark {
+  background: var(--ink);
+  color: #fff;
+}
+.btn-dark:hover:not(:disabled) { background: #000; }
+
+/* ---------- Banner ---------- */
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: 13px var(--sp-4);
+  border-radius: var(--r-md);
+  border: 1px solid;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.banner-success { background: var(--success-soft); border-color: #bbf7d0; color: var(--success-dark); }
+.banner-danger { background: var(--danger-soft); border-color: #fecaca; color: var(--danger-dark); }
+.banner-warning { background: var(--warning-soft); border-color: #fde68a; color: var(--warning-dark); }
+.banner-info { background: var(--info-soft); border-color: #a5f3fc; color: #155e63; }
+
+/* ---------- Auth shell ---------- */
+.auth-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-6);
+  background:
+    radial-gradient(1100px 550px at 12% -10%, #eef2ff 0%, transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, #ecfeff 0%, transparent 55%),
+    var(--canvas);
+}
+
+.auth-shell {
+  width: 100%;
+  max-width: 440px;
+}
+
+.auth-mark {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  justify-content: center;
+  margin-bottom: var(--sp-6);
+}
+
+.auth-mark-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-sm);
+  background: linear-gradient(135deg, var(--primary), #7c6cf0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+  font-size: 15px;
+  box-shadow: var(--shadow-sm);
+}
+
+.auth-mark-name {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.auth-panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-lg);
+  padding: var(--sp-8) var(--sp-8) var(--sp-6);
+}
+
+.auth-panel h2 {
+  margin: 0 0 6px;
+  font-family: var(--font-ui);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  text-align: center;
+}
+
+.auth-subtitle {
+  margin: 0 0 28px;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.auth-field {
+  margin-bottom: var(--sp-4);
+}
+
+.auth-field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+}
+
+.auth-field input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface-sunken);
+  font-size: 14.5px;
+  font-family: var(--font-ui);
+  color: var(--ink);
+  outline: none;
+  transition: border-color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
+}
+
+.auth-field input:focus {
+  border-color: var(--primary);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--primary-ring);
+}
+
+.auth-field input::placeholder { color: var(--faint); }
+
+.auth-links {
+  margin-top: var(--sp-5);
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.auth-links a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.auth-links a:hover { text-decoration: underline; }
+
+.auth-divider {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: var(--sp-5) 0;
+}
+
+/* ---------- Password strength meter ---------- */
+.pw-strength {
+  margin: -6px 0 var(--sp-3);
+}
+
+.pw-strength-track {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.pw-strength-bar {
+  flex: 1;
+  height: 4px;
+  border-radius: var(--r-full);
+  background: var(--line);
+  transition: background var(--dur-med) var(--ease);
+}
+
+.pw-strength-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.field-hint {
+  margin: -6px 0 var(--sp-3);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.field-hint.is-good { color: var(--success); }
+.field-hint.is-bad { color: var(--danger); }
+
+/* ---------- 2FA method pills (used on Login) ---------- */
+.pill-toggle {
+  display: flex;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+
+.pill-toggle button {
+  flex: 1;
+  padding: 10px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line-strong);
+  background: var(--surface-sunken);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease);
+}
+
+.pill-toggle button.is-active {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.code-input {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 26px;
+  text-align: center;
+  letter-spacing: 10px;
+  font-weight: 600;
+  padding: 12px;
+}

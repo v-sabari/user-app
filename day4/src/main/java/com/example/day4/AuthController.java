@@ -147,7 +147,19 @@ public class AuthController {
         }
 
         User user = optionalUser.get();
+        System.out.println("========== LOGIN DEBUG ==========");
+        System.out.println("Email entered      : " + request.getEmail());
+        System.out.println("Email from DB      : " + user.getEmail());
+        System.out.println("Password entered   : " + request.getPassword());
+        System.out.println("Password hash(DB)  : " + user.getPassword());
 
+        boolean matches = passwordEncoder.matches(
+                request.getPassword(),
+                user.getPassword()
+        );
+
+        System.out.println("Password matches?  : " + matches);
+        System.out.println("===============================");
         // ================= ACCOUNT LOCKED =================
         if ("LOCKED".equalsIgnoreCase(user.getStatus())) {
 

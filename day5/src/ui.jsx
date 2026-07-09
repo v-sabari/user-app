@@ -87,3 +87,36 @@ export function AuthMark({ label = "SecureAuth" }) {
     </div>
   );
 }
+
+// ================= STAT CARD =================
+// Generic metric tile. `accent` sets the top border color, `valueColor`
+// optionally overrides the value's color — both accept any CSS color,
+// including dynamic ones the API returns (e.g. a risk color).
+export function StatCard({ label, value, sub, accent, valueColor }) {
+  return (
+    <div className="stat-card" style={{ borderTopColor: accent }}>
+      <p className="stat-label">{label}</p>
+      <p className="stat-value" style={{ color: valueColor }}>{value}</p>
+      {sub && <p className="stat-sub">{sub}</p>}
+    </div>
+  );
+}
+
+// ================= BADGE (status / severity pill) =================
+// tone: "success" | "warning" | "danger" | "info" | "neutral"
+export function Badge({ tone = "neutral", children }) {
+  return <span className={`badge badge-${tone}`}>{children}</span>;
+}
+
+// ================= PAGE HEADER (title + subtitle + action row) =================
+export function PageHeader({ title, subtitle, children }) {
+  return (
+    <div className="top-bar">
+      <div>
+        <h2>{title}</h2>
+        {subtitle && <p className="welcome-text">{subtitle}</p>}
+      </div>
+      {children && <div className="nav-pills">{children}</div>}
+    </div>
+  );
+}

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiRequest, logout } from "./apiClient";
 import AlertBell from "./AlertBell"; // ✅ Day 77 — Import alert bell
+import { Button, StatCard } from "./ui";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -139,359 +140,237 @@ function Dashboard() {
   }, [profile, page, searchTerm]);
 
   return (
-    <div style={container}>
+    <div className="container">
+      <div className="card">
 
-      {/* ===== HEADER ===== */}
-      <div style={header}>
-        <div>
-          <h2>Dashboard</h2>
-          <p style={subText}>Manage users, sessions & security</p>
+        {/* ===== HEADER ===== */}
+        <div className="top-bar">
+          <div>
+            <h2>Dashboard</h2>
+            <p className="welcome-text">Manage users, sessions &amp; security</p>
+          </div>
+
+          <div className="nav-pills">
+            {/* ✅ Day 77 — Alert Bell */}
+            <AlertBell onClick={() => navigate("/security-alerts")} />
+
+            <Button variant="secondary" onClick={() => navigate("/profile")}>My profile</Button>
+            <Button variant="secondary" onClick={() => navigate("/my-activity")}>My activity</Button>
+            <Button variant="secondary" onClick={() => navigate("/security-audit")}>Security audit</Button>
+
+            {isAdmin && <Button variant="secondary" onClick={() => navigate("/users")}>Manage users</Button>}
+            {isAdmin && <Button variant="secondary" onClick={() => navigate("/risk-assessment")}>Risk assessment</Button>}
+            {isAdmin && <Button variant="secondary" onClick={() => navigate("/security-dashboard")}>Security dashboard</Button>}
+            {isAdmin && <Button variant="secondary" onClick={() => navigate("/active-sessions")}>Active sessions</Button>}
+            {isAdmin && <Button variant="secondary" onClick={() => navigate("/audit-logs")}>Audit logs</Button>}
+            {isAdmin && <Button variant="secondary" onClick={() => navigate("/analytics")}>Analytics</Button>}
+
+            {/* ✅ Day 79 — Alert History Button */}
+            <Button variant="secondary" onClick={() => navigate("/security-alerts/history")}>Alert history</Button>
+            <Button variant="secondary" onClick={() => navigate("/login-history")}>📍 Login history</Button>
+            <Button variant="secondary" onClick={handleLogout}>Logout</Button>
+            <Button variant="danger" onClick={handleLogoutAll}>Logout all</Button>
+          </div>
         </div>
 
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
-          {/* ✅ Day 77 — Alert Bell */}
-          <AlertBell onClick={() => navigate("/security-alerts")} />
-
-          <button style={{ ...btn, background: "#2563eb" }} onClick={() => navigate("/profile")}>
-            My Profile
-          </button>
-
-          <button style={{ ...btn, background: "#0891b2" }} onClick={() => navigate("/my-activity")}>
-            My Activity
-          </button>
-
-          <button style={{ ...btn, background: "#7c3aed" }} onClick={() => navigate("/security-audit")}>
-            Security Audit
-          </button>
-
-          {isAdmin && (
-            <button style={{ ...btn, background: "#0f766e" }} onClick={() => navigate("/users")}>
-              Manage Users
-            </button>
-          )}
-
-          {isAdmin && (
-            <button style={{ ...btn, background: "#d97706" }} onClick={() => navigate("/risk-assessment")}>
-              Risk Assessment
-            </button>
-          )}
-
-          {isAdmin && (
-            <button style={{ ...btn, background: "#be185d" }} onClick={() => navigate("/security-dashboard")}>
-              Security Dashboard
-            </button>
-          )}
-
-          {isAdmin && (
-            <button style={{ ...btn, background: "#0f766e" }} onClick={() => navigate("/active-sessions")}>
-              Active Sessions
-            </button>
-          )}
-
-          {isAdmin && (
-            <button style={{ ...btn, background: "#0f766e" }} onClick={() => navigate("/audit-logs")}>
-              Audit Logs
-            </button>
-          )}
-
-          {isAdmin && (
-            <button style={{ ...btn, background: "#b45309" }} onClick={() => navigate("/analytics")}>
-              Analytics
-            </button>
-          )}
-
-          {/* ✅ Day 79 — Alert History Button */}
-          <button style={{ ...btn, background: "#6b7280" }} onClick={() => navigate("/security-alerts/history")}>
-            Alert History
-          </button>
-          <button type="button" onClick={() => navigate("/login-history")}>
-  📍 Login History
-</button>
-          <button style={btn} onClick={handleLogout}>Logout</button>
-          <button style={dangerBtn} onClick={handleLogoutAll}>Logout All</button>
-        </div>
-      </div>
-
-      {/* ===== SECURITY SCORE WIDGET ===== */}
-      {!securityLoading && securityScore && (
-        <div style={{ ...securityScoreWidget, borderLeft: `4px solid ${securityScore.riskColor}` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "16px", justifyContent: "space-between", flexWrap: "wrap" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-              <div
-                style={{
-                  width: "60px",
-                  height: "60px",
-                  borderRadius: "50%",
-                  background: securityScore.riskColor,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexDirection: "column",
-                }}
-              >
-                <div style={{ fontSize: "20px", fontWeight: "800", color: "white", lineHeight: "1" }}>
-                  {securityScore.riskScore}
+        {/* ===== SECURITY SCORE WIDGET ===== */}
+        {!securityLoading && securityScore && (
+          <div className="security-score-panel" style={{ borderLeft: `4px solid ${securityScore.riskColor}`, marginBottom: "20px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "16px", justifyContent: "space-between", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                <div className="score-ring" style={{ background: securityScore.riskColor }}>
+                  <span>{securityScore.riskScore}</span>
+                </div>
+                <div>
+                  <p style={{ margin: "0 0 4px", fontSize: "14px", fontWeight: "700", color: "var(--ink)" }}>
+                    Your security score
+                  </p>
+                  <p style={{ margin: 0, fontSize: "12px", color: "var(--muted)" }}>
+                    {securityScore.riskLevel === "SECURE"
+                      ? "✅ Your account is secure"
+                      : securityScore.riskLevel === "CAUTION"
+                      ? "⚠️ Review recommendations"
+                      : securityScore.riskLevel === "AT_RISK"
+                      ? "⚠️ Action recommended"
+                      : "🔴 Immediate action needed"}
+                  </p>
                 </div>
               </div>
-              <div>
-                <p style={{ margin: "0 0 4px", fontSize: "14px", fontWeight: "700", color: "#111827" }}>
-                  Your Security Score
-                </p>
-                <p style={{ margin: 0, fontSize: "12px", color: "#6b7280" }}>
-                  {securityScore.riskLevel === "SECURE"
-                    ? "✅ Your account is secure"
-                    : securityScore.riskLevel === "CAUTION"
-                    ? "⚠️ Review recommendations"
-                    : securityScore.riskLevel === "AT_RISK"
-                    ? "⚠️ Action recommended"
-                    : "🔴 Immediate action needed"}
-                </p>
-              </div>
-            </div>
-            <button
-              style={{ ...btn, background: securityScore.riskColor }}
-              onClick={() => navigate("/security-audit")}
-            >
-              View Details →
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ===== ADMIN QUICK STATS ===== */}
-      {isAdmin && quickStats && (
-        <div style={quickStatsGrid}>
-
-          <div style={{ ...statCard, borderTop: "3px solid #2563eb" }}>
-            <p style={statLabel}>Total Users</p>
-            <p style={{ ...statValue, color: "#2563eb" }}>{quickStats.totalUsers}</p>
-            <p style={statSub}>registered accounts</p>
-          </div>
-
-          <div style={{ ...statCard, borderTop: "3px solid #16a34a" }}>
-            <p style={statLabel}>Active Users</p>
-            <p style={{ ...statValue, color: "#16a34a" }}>{quickStats.activeUsers}</p>
-            <p style={statSub}>
-              {quickStats.totalUsers > 0
-                ? Math.round((quickStats.activeUsers / quickStats.totalUsers) * 100)
-                : 0}% of total
-            </p>
-          </div>
-
-          <div style={{ ...statCard, borderTop: "3px solid #dc2626" }}>
-            <p style={statLabel}>Locked Users</p>
-            <p style={{ ...statValue, color: quickStats.lockedUsers > 0 ? "#dc2626" : "#111827" }}>
-              {quickStats.lockedUsers}
-            </p>
-            <p style={statSub}>
-              {quickStats.lockedUsers > 0 ? "⚠️ action needed" : "✅ all clear"}
-            </p>
-          </div>
-
-          <div style={{ ...statCard, borderTop: "3px solid #0891b2" }}>
-            <p style={statLabel}>Live Sessions</p>
-            <p style={{ ...statValue, color: "#0891b2" }}>{activeSessions}</p>
-            <p style={statSub}>system-wide</p>
-          </div>
-
-          <div style={{ ...statCard, borderTop: "3px solid #7c3aed" }}>
-            <p style={statLabel}>Audit Logs</p>
-            <p style={{ ...statValue, color: "#7c3aed" }}>{quickStats.totalAuditLogs}</p>
-            <p style={statSub}>
-              {quickStats.successfulActions} success / {quickStats.failedActions} failed
-            </p>
-          </div>
-
-          <div style={{ ...statCard, borderTop: "3px solid #d97706" }}>
-            <p style={statLabel}>Admin Users</p>
-            <p style={{ ...statValue, color: "#d97706" }}>{quickStats.adminUsers}</p>
-            <p style={statSub}>{quickStats.normalUsers} regular users</p>
-          </div>
-
-        </div>
-      )}
-
-      {/* ===== SUSPICIOUS LOGIN BANNER ===== */}
-      {loginAlert === "suspicious" && (
-        <div style={suspiciousBanner}>
-          <div style={{ flex: 1 }}>
-            <p style={{ margin: "0 0 6px", fontWeight: "700", color: "#991b1b", fontSize: "15px" }}>
-              🚨 Suspicious Login Detected
-            </p>
-            <p style={{ margin: "0 0 12px", color: "#7f1d1d", fontSize: "13px", lineHeight: "1.5" }}>
-              Your account was accessed from a new IP address on a known device.
-              If this was not you, change your password immediately.
-            </p>
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-              <button style={{ ...btn, background: "#dc2626", padding: "6px 14px", fontSize: "13px" }} onClick={() => navigate("/profile")}>
-                Change Password
-              </button>
-              <button style={{ ...btn, background: "#374151", padding: "6px 14px", fontSize: "13px" }} onClick={() => navigate("/my-activity")}>
-                View My Activity
-              </button>
+              <Button
+                variant="primary"
+                style={{ background: securityScore.riskColor }}
+                onClick={() => navigate("/security-audit")}
+              >
+                View details →
+              </Button>
             </div>
           </div>
-          <button onClick={() => setLoginAlert(null)} style={dismissBtn} title="Dismiss">✕</button>
-        </div>
-      )}
-
-      {/* ===== NEW DEVICE LOGIN BANNER ===== */}
-      {loginAlert === "newDevice" && (
-        <div style={newDeviceBanner}>
-          <div style={{ flex: 1 }}>
-            <p style={{ margin: "0 0 6px", fontWeight: "700", color: "#92400e", fontSize: "15px" }}>
-              📱 New Device Login
-            </p>
-            <p style={{ margin: "0 0 12px", color: "#78350f", fontSize: "13px", lineHeight: "1.5" }}>
-              Your account was accessed from a new device. If this was not you,
-              change your password and terminate all active sessions immediately.
-            </p>
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-              <button style={{ ...btn, background: "#d97706", padding: "6px 14px", fontSize: "13px" }} onClick={() => navigate("/profile")}>
-                Secure My Account
-              </button>
-              <button style={{ ...btn, background: "#374151", padding: "6px 14px", fontSize: "13px" }} onClick={() => navigate("/my-activity")}>
-                View My Activity
-              </button>
-            </div>
-          </div>
-          <button onClick={() => setLoginAlert(null)} style={dismissBtn} title="Dismiss">✕</button>
-        </div>
-      )}
-
-      {message && <p style={errorText}>{message}</p>}
-
-      {/* ===== PROFILE ===== */}
-      <div style={card}>
-        <h3>My Profile</h3>
-        {profile && (
-          <>
-            <p><b>Name:</b> {profile.name}</p>
-            <p><b>Email:</b> {profile.email}</p>
-            <p><b>Role:</b> {profile.role}</p>
-          </>
         )}
-      </div>
 
-      {/* ===== SESSIONS ===== */}
-      <div style={card}>
-        <h3>Active Sessions</h3>
-        {sessions.length === 0 && <p>No sessions found</p>}
-        {sessions.map((s) => (
-          <div key={s.id} style={sessionCard}>
-            <div>
-              <p><b>Device:</b> {s.deviceType}</p>
-              <p><b>IP:</b> {s.ipAddress}</p>
-              <p>
-                <b>Status:</b>{" "}
-                <span style={{ color: s.active ? "green" : "gray" }}>
-                  {s.active ? "Active" : "Inactive"}
-                </span>
-              </p>
-            </div>
-            {s.active ? (
-              <button style={dangerBtn} onClick={() => handleSingleLogout(s.id)}>Logout</button>
-            ) : (
-              <span style={inactiveText}>Logged out</span>
-            )}
+        {/* ===== ADMIN QUICK STATS ===== */}
+        {isAdmin && quickStats && (
+          <div className="stat-grid" style={{ marginBottom: "20px" }}>
+
+            <StatCard
+              label="Total users"
+              value={quickStats.totalUsers}
+              sub="registered accounts"
+              accent="var(--primary)"
+              valueColor="var(--primary)"
+            />
+
+            <StatCard
+              label="Active users"
+              value={quickStats.activeUsers}
+              sub={`${quickStats.totalUsers > 0
+                ? Math.round((quickStats.activeUsers / quickStats.totalUsers) * 100)
+                : 0}% of total`}
+              accent="var(--success)"
+              valueColor="var(--success)"
+            />
+
+            <StatCard
+              label="Locked users"
+              value={quickStats.lockedUsers}
+              sub={quickStats.lockedUsers > 0 ? "⚠️ action needed" : "✅ all clear"}
+              accent="var(--danger)"
+              valueColor={quickStats.lockedUsers > 0 ? "var(--danger)" : "var(--ink)"}
+            />
+
+            <StatCard
+              label="Live sessions"
+              value={activeSessions}
+              sub="system-wide"
+              accent="var(--info)"
+              valueColor="var(--info)"
+            />
+
+            <StatCard
+              label="Audit logs"
+              value={quickStats.totalAuditLogs}
+              sub={`${quickStats.successfulActions} success / ${quickStats.failedActions} failed`}
+              accent="#7c3aed"
+              valueColor="#7c3aed"
+            />
+
+            <StatCard
+              label="Admin users"
+              value={quickStats.adminUsers}
+              sub={`${quickStats.normalUsers} regular users`}
+              accent="var(--warning)"
+              valueColor="var(--warning)"
+            />
+
           </div>
-        ))}
-      </div>
+        )}
 
-      {/* ===== USERS ===== */}
-      {isAdmin && (
-        <div style={card}>
-          <h3>Users</h3>
-          <input
-            style={input}
-            placeholder="Search users..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          {users.map((u) => (
-            <div key={u.id} style={userCard}>
-              <div>
-                <p><b>{u.name}</b></p>
-                <p>{u.email}</p>
-                <p>{u.status}</p>
+        {/* ===== SUSPICIOUS LOGIN BANNER ===== */}
+        {loginAlert === "suspicious" && (
+          <div className="alert-callout tone-danger" style={{ marginBottom: "20px" }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ margin: "0 0 6px", fontWeight: "700", color: "var(--danger-dark)", fontSize: "15px" }}>
+                🚨 Suspicious login detected
+              </p>
+              <p style={{ margin: "0 0 12px", color: "var(--danger-dark)", fontSize: "13px", lineHeight: "1.5" }}>
+                Your account was accessed from a new IP address on a known device.
+                If this was not you, change your password immediately.
+              </p>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                <Button variant="danger" onClick={() => navigate("/profile")}>Change password</Button>
+                <Button variant="secondary" onClick={() => navigate("/my-activity")}>View my activity</Button>
               </div>
+            </div>
+            <button onClick={() => setLoginAlert(null)} className="alert-dismiss" title="Dismiss">✕</button>
+          </div>
+        )}
+
+        {/* ===== NEW DEVICE LOGIN BANNER ===== */}
+        {loginAlert === "newDevice" && (
+          <div className="alert-callout tone-warning" style={{ marginBottom: "20px" }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ margin: "0 0 6px", fontWeight: "700", color: "var(--warning-dark)", fontSize: "15px" }}>
+                📱 New device login
+              </p>
+              <p style={{ margin: "0 0 12px", color: "var(--warning-dark)", fontSize: "13px", lineHeight: "1.5" }}>
+                Your account was accessed from a new device. If this was not you,
+                change your password and terminate all active sessions immediately.
+              </p>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                <Button variant="secondary" style={{ background: "var(--warning)", color: "#fff" }} onClick={() => navigate("/profile")}>Secure my account</Button>
+                <Button variant="secondary" onClick={() => navigate("/my-activity")}>View my activity</Button>
+              </div>
+            </div>
+            <button onClick={() => setLoginAlert(null)} className="alert-dismiss" title="Dismiss">✕</button>
+          </div>
+        )}
+
+        {message && <p className="error-message">{message}</p>}
+
+        {/* ===== PROFILE ===== */}
+        <div className="dashboard-section">
+          <h3>My profile</h3>
+          {profile && (
+            <div className="dashboard-meta">
+              <p><b>Name:</b> {profile.name}</p>
+              <p><b>Email:</b> {profile.email}</p>
+              <p><b>Role:</b> {profile.role}</p>
+            </div>
+          )}
+        </div>
+
+        {/* ===== SESSIONS ===== */}
+        <div className="dashboard-section">
+          <h3>Active sessions</h3>
+          {sessions.length === 0 && <p>No sessions found</p>}
+          {sessions.map((s) => (
+            <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--line)", padding: "10px 0" }}>
+              <div>
+                <p><b>Device:</b> {s.deviceType}</p>
+                <p><b>IP:</b> {s.ipAddress}</p>
+                <p>
+                  <b>Status:</b>{" "}
+                  <span className={s.active ? "status-badge status-active" : "status-badge status-inactive"}>
+                    {s.active ? "Active" : "Inactive"}
+                  </span>
+                </p>
+              </div>
+              {s.active ? (
+                <Button variant="danger" onClick={() => handleSingleLogout(s.id)}>Logout</Button>
+              ) : (
+                <span style={{ color: "var(--faint)", fontSize: "12px" }}>Logged out</span>
+              )}
             </div>
           ))}
-          <div style={pagination}>
-            <button style={btn} disabled={page === 0} onClick={() => setPage(page - 1)}>Prev</button>
-            <span>{page + 1} / {totalPages}</span>
-            <button style={btn} disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>Next</button>
-          </div>
         </div>
-      )}
+
+        {/* ===== USERS ===== */}
+        {isAdmin && (
+          <div className="dashboard-section">
+            <h3>Users</h3>
+            <input
+              placeholder="Search users..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <div className="user-list">
+              {users.map((u) => (
+                <div key={u.id} className="user-card">
+                  <p><b>{u.name}</b></p>
+                  <p>{u.email}</p>
+                  <p>{u.status}</p>
+                </div>
+              ))}
+            </div>
+            <div className="pagination">
+              <Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Prev</Button>
+              <span>{page + 1} / {totalPages}</span>
+              <Button variant="secondary" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>Next</Button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
-
-/* ===== STYLES ===== */
-
-const container = { maxWidth: "1100px", margin: "auto", padding: "30px" };
-const header = { display: "flex", justifyContent: "space-between", marginBottom: "25px", flexWrap: "wrap", gap: "12px" };
-const subText = { color: "gray" };
-const card = { border: "1px solid #ddd", borderRadius: "10px", padding: "20px", marginBottom: "20px", background: "#fff" };
-const sessionCard = { display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #eee", padding: "10px 0" };
-const userCard = { borderBottom: "1px solid #eee", padding: "10px 0" };
-const pagination = { marginTop: "10px", display: "flex", gap: "10px", alignItems: "center" };
-const btn = { padding: "6px 12px", cursor: "pointer", border: "none", borderRadius: "6px", color: "white", background: "#374151" };
-const dangerBtn = { padding: "6px 12px", background: "red", color: "white", border: "none", borderRadius: "6px", cursor: "pointer" };
-const input = { width: "100%", padding: "8px", marginBottom: "10px" };
-const errorText = { color: "red" };
-const inactiveText = { color: "gray", fontSize: "12px" };
-
-const quickStatsGrid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-  gap: "14px",
-  marginBottom: "24px",
-};
-
-const statCard = {
-  background: "#ffffff",
-  border: "1px solid #e5e7eb",
-  borderRadius: "12px",
-  padding: "16px",
-  boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-};
-
-const statLabel = {
-  margin: "0 0 6px",
-  fontSize: "12px",
-  fontWeight: "600",
-  color: "#6b7280",
-  textTransform: "uppercase",
-  letterSpacing: "0.05em",
-};
-
-const statValue = {
-  margin: "0 0 4px",
-  fontSize: "28px",
-  fontWeight: "800",
-  color: "#111827",
-  lineHeight: "1",
-};
-
-const statSub = {
-  margin: 0,
-  fontSize: "12px",
-  color: "#9ca3af",
-};
-
-const securityScoreWidget = {
-  background: "#f9fafb",
-  border: "1px solid #e5e7eb",
-  borderRadius: "12px",
-  padding: "16px 20px",
-  marginBottom: "20px",
-  boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-};
-
-const suspiciousBanner = { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", background: "#fee2e2", border: "1px solid #fca5a5", borderRadius: "12px", padding: "16px 20px", marginBottom: "20px" };
-const newDeviceBanner = { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", background: "#fef3c7", border: "1px solid #fde68a", borderRadius: "12px", padding: "16px 20px", marginBottom: "20px" };
-const dismissBtn = { background: "transparent", border: "none", cursor: "pointer", fontSize: "16px", color: "#6b7280", padding: "0 4px", flexShrink: 0 };
 
 export default Dashboard;

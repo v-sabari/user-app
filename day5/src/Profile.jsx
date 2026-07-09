@@ -1,21 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiRequest, logoutUser } from "./apiClient";
-
-// ================= PASSWORD STRENGTH =================
-const getPasswordStrength = (password) => {
-  if (!password) return { score: 0, label: "", color: "" };
-  let score = 0;
-  if (password.length >= 6) score++;
-  if (password.length >= 10) score++;
-  if (/[A-Z]/.test(password)) score++;
-  if (/[0-9]/.test(password)) score++;
-  if (/[^A-Za-z0-9]/.test(password)) score++;
-  if (score <= 1) return { score: 1, label: "Weak", color: "#dc2626" };
-  if (score === 2) return { score: 2, label: "Fair", color: "#d97706" };
-  if (score === 3) return { score: 3, label: "Good", color: "#2563eb" };
-  return { score: 4, label: "Strong", color: "#16a34a" };
-};
+import { Button, Banner, StatCard, PasswordStrengthMeter, MatchHint } from "./ui";
 
 function Profile() {
   const navigate = useNavigate();
@@ -53,8 +39,6 @@ function Profile() {
   const [deleteError, setDeleteError] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  const newPasswordStrength = getPasswordStrength(passwordForm.newPassword);
 
   // ================= LOGOUT =================
   const handleLogout = () => { logoutUser(); navigate("/login"); };
@@ -236,9 +220,9 @@ function Profile() {
             <p className="welcome-text">Manage your account settings and security overview.</p>
           </div>
           <div className="inline-actions">
-            <button type="button" onClick={() => navigate("/dashboard")}>Dashboard</button>
-            <button type="button" onClick={() => navigate("/my-activity")}>My Activity</button>
-            <button type="button" className="logout-btn" onClick={handleLogout}>Logout</button>
+            <Button variant="secondary" onClick={() => navigate("/dashboard")}>Dashboard</Button>
+            <Button variant="secondary" onClick={() => navigate("/my-activity")}>My activity</Button>
+            <Button variant="secondary" onClick={handleLogout}>Logout</Button>
           </div>
         </div>
 
@@ -262,19 +246,19 @@ function Profile() {
                 </p>
               </div>
               <div style={{ marginTop: "16px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                <button type="button" style={{ width: "auto", minWidth: "130px" }}
+                <Button variant="secondary"
                   onClick={() => { setIsEditing(true); setProfileMessage(""); setProfileError(""); }}>
-                  Edit Name
-                </button>
-                <button type="button" style={{ width: "auto", minWidth: "130px", background: "#0891b2" }}
+                  Edit name
+                </Button>
+                <Button variant="secondary" style={{ background: "var(--info)", color: "#fff" }}
                   onClick={() => { setIsEditingEmail(true); setNewEmail(""); setEmailPassword(""); setEmailMessage(""); setEmailError(""); }}>
-                  Edit Email
-                </button>
+                  Edit email
+                </Button>
                 {/* ✅ Day 81 — 2FA Setup Button */}
-                <button type="button" style={{ width: "auto", minWidth: "130px", background: "#7c3aed" }}
+                <Button variant="secondary" style={{ background: "#7c3aed", color: "#fff" }}
                   onClick={() => navigate("/2fa-setup")}>
                   🔐 Setup 2FA
-                </button>
+                </Button>
               </div>
             </>
           )}
@@ -284,8 +268,8 @@ function Profile() {
               <input type="text" placeholder="Enter new name" value={editName}
                 onChange={(e) => setEditName(e.target.value)} minLength={2} maxLength={50} required />
               <div className="inline-actions" style={{ marginTop: "10px" }}>
-                <button type="submit">Save Name</button>
-                <button type="button" onClick={() => { setIsEditing(false); setEditName(profile.name); setProfileError(""); }}>Cancel</button>
+                <Button type="submit" variant="primary">Save name</Button>
+                <Button type="button" variant="secondary" onClick={() => { setIsEditing(false); setEditName(profile.name); setProfileError(""); }}>Cancel</Button>
               </div>
             </form>
           )}
@@ -293,27 +277,27 @@ function Profile() {
 
         {/* ===== UPDATE EMAIL SECTION ===== */}
         {isEditingEmail && (
-          <div className="dashboard-section" style={{ border: "1px solid #bae6fd", borderRadius: "12px", background: "#f0f9ff", padding: "20px" }}>
-            <h3 style={{ margin: "0 0 8px", color: "#0369a1" }}>✉️ Update Email Address</h3>
+          <div className="info-panel">
+            <h3 style={{ margin: "0 0 8px", color: "#0369a1" }}>✉️ Update email address</h3>
             <p style={{ color: "#0c4a6e", fontSize: "13px", marginBottom: "16px", lineHeight: "1.6" }}>
               After updating your email, all sessions will be invalidated. Use your <strong>new email</strong> to sign back in.
             </p>
-            {emailMessage && <div style={{ padding: "12px", borderRadius: "8px", background: "#dcfce7", color: "#15803d", border: "1px solid #86efac", fontSize: "14px", marginBottom: "14px" }}>✅ {emailMessage}</div>}
-            {emailError && <div style={{ padding: "12px", borderRadius: "8px", background: "#fee2e2", color: "#b91c1c", border: "1px solid #fca5a5", fontSize: "14px", marginBottom: "14px" }}>❌ {emailError}</div>}
+            {emailMessage && <Banner tone="success" style={{ marginBottom: "14px" }}>✅ {emailMessage}</Banner>}
+            {emailError && <Banner tone="danger" style={{ marginBottom: "14px" }}>❌ {emailError}</Banner>}
             <form onSubmit={handleUpdateEmail}>
-              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "5px" }}>Current Email</label>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "5px" }}>Current email</label>
               <input type="email" value={profile?.email || ""} disabled style={{ background: "#f3f4f6", color: "#6b7280", cursor: "not-allowed" }} />
-              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "5px", marginTop: "4px" }}>New Email Address</label>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "5px", marginTop: "4px" }}>New email address</label>
               <input type="email" placeholder="Enter new email address" value={newEmail}
                 onChange={(e) => { setNewEmail(e.target.value); setEmailError(""); }} required autoFocus />
-              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "5px", marginTop: "4px" }}>Confirm with Password</label>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "5px", marginTop: "4px" }}>Confirm with password</label>
               <input type="password" placeholder="Enter current password to confirm"
                 value={emailPassword} onChange={(e) => { setEmailPassword(e.target.value); setEmailError(""); }} required />
               <div className="inline-actions" style={{ marginTop: "10px" }}>
-                <button type="submit" disabled={emailLoading} style={{ width: "auto", minWidth: "160px", background: emailLoading ? "#9ca3af" : "#0891b2" }}>
-                  {emailLoading ? "Updating..." : "Update Email"}
-                </button>
-                <button type="button" onClick={() => { setIsEditingEmail(false); setEmailError(""); setEmailMessage(""); }} style={{ width: "auto", background: "#6b7280" }}>Cancel</button>
+                <Button type="submit" variant="secondary" style={{ background: "var(--info)", color: "#fff" }} disabled={emailLoading}>
+                  {emailLoading ? "Updating…" : "Update email"}
+                </Button>
+                <Button type="button" variant="secondary" onClick={() => { setIsEditingEmail(false); setEmailError(""); setEmailMessage(""); }}>Cancel</Button>
               </div>
             </form>
           </div>
@@ -321,15 +305,15 @@ function Profile() {
 
         {/* ===== DAY 73 — LOGIN STATISTICS SECTION ===== */}
         <div className="dashboard-section">
-          <h3>🔐 Login Statistics</h3>
+          <h3>🔐 Login statistics</h3>
           <p className="welcome-text" style={{ marginBottom: "16px" }}>
             Your personal account security metrics.
           </p>
 
           {loginStatsLoading ? (
-            <p style={{ color: "#9ca3af", fontSize: "13px" }}>Loading login statistics...</p>
+            <p style={{ color: "var(--faint)", fontSize: "13px" }}>Loading login statistics...</p>
           ) : !loginStats ? (
-            <p style={{ color: "#9ca3af", fontSize: "13px" }}>Could not load stats.</p>
+            <p style={{ color: "var(--faint)", fontSize: "13px" }}>Could not load stats.</p>
           ) : (
             <>
               {/* ✅ Health status banner */}
@@ -343,9 +327,9 @@ function Profile() {
                 <span style={{ fontSize: "20px" }}>{getHealthIcon(loginStats.healthStatus)}</span>
                 <div>
                   <p style={{ margin: 0, fontWeight: "700", color: getHealthColor(loginStats.healthStatus), fontSize: "14px" }}>
-                    Account Security: {loginStats.healthStatus === "AT_RISK" ? "At Risk" : loginStats.healthStatus === "CAUTION" ? "Needs Attention" : "Healthy"}
+                    Account security: {loginStats.healthStatus === "AT_RISK" ? "At risk" : loginStats.healthStatus === "CAUTION" ? "Needs attention" : "Healthy"}
                   </p>
-                  <p style={{ margin: 0, fontSize: "12px", color: "#6b7280" }}>
+                  <p style={{ margin: 0, fontSize: "12px", color: "var(--muted)" }}>
                     {loginStats.healthStatus === "AT_RISK"
                       ? "High number of failed logins detected. Consider changing your password."
                       : loginStats.healthStatus === "CAUTION"
@@ -356,36 +340,38 @@ function Profile() {
               </div>
 
               {/* ✅ 4 stat cards */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "12px" }}>
+              <div className="stat-grid">
 
-                <div style={{ background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: "12px", padding: "14px", borderTop: "3px solid #2563eb" }}>
-                  <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "#6b7280", textTransform: "uppercase" }}>Total Logins</p>
-                  <p style={{ margin: 0, fontSize: "26px", fontWeight: "800", color: "#2563eb" }}>{loginStats.totalLogins ?? 0}</p>
-                  <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#9ca3af" }}>successful all time</p>
-                </div>
+                <StatCard
+                  label="Total logins"
+                  value={loginStats.totalLogins ?? 0}
+                  sub="successful all time"
+                  accent="var(--primary)"
+                  valueColor="var(--primary)"
+                />
 
-                <div style={{ background: loginStats.recentFailedLogins > 0 ? "#fff1f2" : "#f0fdf4", border: `1px solid ${loginStats.recentFailedLogins > 0 ? "#fecaca" : "#bbf7d0"}`, borderRadius: "12px", padding: "14px", borderTop: `3px solid ${loginStats.recentFailedLogins > 0 ? "#dc2626" : "#16a34a"}` }}>
-                  <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "#6b7280", textTransform: "uppercase" }}>Failed (7 days)</p>
-                  <p style={{ margin: 0, fontSize: "26px", fontWeight: "800", color: loginStats.recentFailedLogins > 0 ? "#dc2626" : "#16a34a" }}>
-                    {loginStats.recentFailedLogins ?? 0}
-                  </p>
-                  <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#9ca3af" }}>
-                    {loginStats.recentFailedLogins === 0 ? "✅ none detected" : "failed attempts"}
-                  </p>
-                </div>
+                <StatCard
+                  label="Failed (7 days)"
+                  value={loginStats.recentFailedLogins ?? 0}
+                  sub={loginStats.recentFailedLogins === 0 ? "✅ none detected" : "failed attempts"}
+                  accent={loginStats.recentFailedLogins > 0 ? "var(--danger)" : "var(--success)"}
+                  valueColor={loginStats.recentFailedLogins > 0 ? "var(--danger)" : "var(--success)"}
+                />
 
-                <div style={{ background: "#faf5ff", border: "1px solid #ddd6fe", borderRadius: "12px", padding: "14px", borderTop: "3px solid #7c3aed" }}>
-                  <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "#6b7280", textTransform: "uppercase" }}>Total Actions</p>
-                  <p style={{ margin: 0, fontSize: "26px", fontWeight: "800", color: "#7c3aed" }}>{loginStats.totalActions ?? 0}</p>
-                  <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#9ca3af" }}>audit log entries</p>
-                </div>
+                <StatCard
+                  label="Total actions"
+                  value={loginStats.totalActions ?? 0}
+                  sub="audit log entries"
+                  accent="#7c3aed"
+                  valueColor="#7c3aed"
+                />
 
-                <div style={{ background: "#f0fdfa", border: "1px solid #99f6e4", borderRadius: "12px", padding: "14px", borderTop: "3px solid #0891b2" }}>
-                  <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "#6b7280", textTransform: "uppercase" }}>Last Login</p>
-                  <p style={{ margin: 0, fontSize: "13px", fontWeight: "700", color: "#0891b2", lineHeight: "1.4" }}>
-                    {loginStats.lastLoginAt ? formatDateTime(loginStats.lastLoginAt) : "Never"}
-                  </p>
-                </div>
+                <StatCard
+                  label="Last login"
+                  value={loginStats.lastLoginAt ? formatDateTime(loginStats.lastLoginAt) : "Never"}
+                  accent="var(--info)"
+                  valueColor="var(--info)"
+                />
 
               </div>
             </>
@@ -394,7 +380,7 @@ function Profile() {
 
         {/* ===== CHANGE PASSWORD SECTION ===== */}
         <div className="dashboard-section">
-          <h3>Change Password</h3>
+          <h3>Change password</h3>
           <p className="welcome-text" style={{ marginBottom: "12px" }}>
             After changing your password, all sessions will be invalidated and you will be redirected to login.
           </p>
@@ -405,24 +391,13 @@ function Profile() {
               onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })} required />
             <input type="password" placeholder="New password (min 6 characters)" value={passwordForm.newPassword}
               onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })} required minLength={6} />
-            {passwordForm.newPassword.length > 0 && (
-              <div style={{ marginTop: "-8px", marginBottom: "12px" }}>
-                <div style={{ display: "flex", gap: "4px", marginBottom: "5px" }}>
-                  {[1, 2, 3, 4].map((level) => (
-                    <div key={level} style={{ flex: 1, height: "4px", borderRadius: "999px", background: newPasswordStrength.score >= level ? newPasswordStrength.color : "#e5e7eb", transition: "background 0.3s ease" }} />
-                  ))}
-                </div>
-                <p style={{ margin: 0, fontSize: "12px", fontWeight: "600", color: newPasswordStrength.color }}>{newPasswordStrength.label} password</p>
-              </div>
-            )}
+            <PasswordStrengthMeter password={passwordForm.newPassword} />
             <input type="password" placeholder="Confirm new password" value={passwordForm.confirmPassword}
               onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} required minLength={6} />
             {passwordForm.confirmPassword.length > 0 && (
-              <p style={{ margin: "-8px 0 12px", fontSize: "12px", fontWeight: "600", color: passwordForm.newPassword === passwordForm.confirmPassword ? "#16a34a" : "#dc2626" }}>
-                {passwordForm.newPassword === passwordForm.confirmPassword ? "✅ Passwords match" : "❌ Passwords do not match"}
-              </p>
+              <MatchHint matches={passwordForm.newPassword === passwordForm.confirmPassword} />
             )}
-            <button type="submit">Change Password</button>
+            <Button type="submit" variant="primary">Change password</Button>
           </form>
         </div>
 
@@ -472,35 +447,33 @@ function Profile() {
         </div>
 
         {/* ===== DANGER ZONE ===== */}
-        <div className="dashboard-section" style={{ border: "1px solid #fecaca", borderRadius: "12px", background: "#fff1f2", padding: "20px", marginTop: "8px" }}>
-          <h3 style={{ color: "#dc2626", margin: "0 0 8px" }}>⚠️ Danger Zone</h3>
-          <p style={{ color: "#6b7280", fontSize: "14px", marginBottom: "16px", lineHeight: "1.6" }}>
+        <div className="danger-zone" style={{ marginTop: "8px" }}>
+          <h3 style={{ color: "var(--danger)", margin: "0 0 8px" }}>⚠️ Danger zone</h3>
+          <p style={{ color: "var(--muted)", fontSize: "14px", marginBottom: "16px", lineHeight: "1.6" }}>
             Permanently delete your account and all associated data. This action <strong>cannot be undone</strong>.
           </p>
           {!showDeleteConfirm ? (
-            <button type="button"
+            <Button type="button" variant="secondary"
               onClick={() => { setShowDeleteConfirm(true); setDeleteError(""); setDeleteConfirmPassword(""); }}
-              style={{ width: "auto", minWidth: "180px", background: "transparent", color: "#dc2626", border: "2px solid #dc2626", borderRadius: "8px", padding: "8px 16px", cursor: "pointer", fontWeight: "600", fontSize: "14px" }}>
-              Delete My Account
-            </button>
+              style={{ background: "transparent", color: "var(--danger)", border: "2px solid var(--danger)" }}>
+              Delete my account
+            </Button>
           ) : (
             <form onSubmit={handleDeleteAccount}>
-              <p style={{ fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "8px" }}>Enter your current password to confirm:</p>
+              <p style={{ fontSize: "14px", fontWeight: "600", color: "var(--ink-soft)", marginBottom: "8px" }}>Enter your current password to confirm:</p>
               <input type="password" placeholder="Enter your password to confirm"
                 value={deleteConfirmPassword}
                 onChange={(e) => { setDeleteConfirmPassword(e.target.value); setDeleteError(""); }}
                 required autoFocus />
-              {deleteError && <p style={{ margin: "-8px 0 12px", fontSize: "13px", color: "#dc2626", fontWeight: "600" }}>❌ {deleteError}</p>}
+              {deleteError && <p style={{ margin: "-8px 0 12px", fontSize: "13px", color: "var(--danger)", fontWeight: "600" }}>❌ {deleteError}</p>}
               <div className="inline-actions" style={{ marginTop: "4px" }}>
-                <button type="submit" disabled={deleteLoading}
-                  style={{ width: "auto", minWidth: "180px", marginTop: 0, background: deleteLoading ? "#9ca3af" : "#dc2626" }}>
-                  {deleteLoading ? "Deleting..." : "Confirm Delete Account"}
-                </button>
-                <button type="button"
-                  onClick={() => { setShowDeleteConfirm(false); setDeleteError(""); setDeleteConfirmPassword(""); }}
-                  style={{ width: "auto", marginTop: 0, background: "#6b7280" }}>
+                <Button type="submit" variant="danger" disabled={deleteLoading}>
+                  {deleteLoading ? "Deleting…" : "Confirm delete account"}
+                </Button>
+                <Button type="button" variant="secondary"
+                  onClick={() => { setShowDeleteConfirm(false); setDeleteError(""); setDeleteConfirmPassword(""); }}>
                   Cancel
-                </button>
+                </Button>
               </div>
             </form>
           )}

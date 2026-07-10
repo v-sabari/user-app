@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiRequest, logoutUser } from "./apiClient";
+import { Button, Banner, StatCard } from "./ui";
 
 function Users() {
   const navigate = useNavigate();
@@ -279,12 +280,12 @@ const [noteDrafts, setNoteDrafts] = useState({});
         {/* ===== HEADER ===== */}
         <div className="top-bar">
           <div>
-            <h2>User Management</h2>
+            <h2>User management</h2>
             <p className="welcome-text">Add, edit, manage users and reset passwords.</p>
           </div>
           <div className="inline-actions">
-            <button type="button" onClick={() => navigate("/dashboard")}>Dashboard</button>
-            <button type="button" className="logout-btn" onClick={handleLogout}>Logout</button>
+            <Button variant="secondary" onClick={() => navigate("/dashboard")}>Dashboard</Button>
+            <Button variant="secondary" onClick={handleLogout}>Logout</Button>
           </div>
         </div>
 
@@ -293,22 +294,22 @@ const [noteDrafts, setNoteDrafts] = useState({});
           const { action, userEmail, reasonText } = reasonModal;
           const label = getModalLabel(action);
           return (
-            <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}>
-              <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", maxWidth: "460px", width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.15)", border: `1px solid ${label.border}` }}>
+            <div className="modal-overlay">
+              <div className="modal-panel" style={{ borderColor: label.border }}>
                 <h3 style={{ margin: "0 0 6px", color: label.color, fontSize: "18px" }}>{label.title}</h3>
-                <p style={{ margin: "0 0 20px", color: "#6b7280", fontSize: "14px" }}>Target: <strong>{userEmail}</strong></p>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "6px" }}>
-                  Reason <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
+                <p style={{ margin: "0 0 20px", color: "var(--muted)", fontSize: "14px" }}>Target: <strong>{userEmail}</strong></p>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "var(--ink-soft)", marginBottom: "6px" }}>
+                  Reason <span style={{ color: "var(--faint)", fontWeight: "400" }}>(optional)</span>
                 </label>
                 <textarea placeholder={`Why are you ${action === "delete" ? "deleting" : action === "lock" ? "locking" : "deactivating"} this user?`}
                   value={reasonText} onChange={(e) => setReasonModal({ ...reasonModal, reasonText: e.target.value })}
                   rows={3} autoFocus
-                  style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "14px", resize: "vertical", fontFamily: "inherit", marginBottom: "20px", boxSizing: "border-box", outline: "none" }} />
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: "10px", border: "1px solid var(--line-strong)", fontSize: "14px", resize: "vertical", fontFamily: "inherit", marginBottom: "20px", boxSizing: "border-box", outline: "none", background: "var(--surface-sunken)" }} />
                 <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                  <button type="button" onClick={() => setReasonModal(null)} style={{ width: "auto", minWidth: "100px", marginTop: 0, background: "#6b7280" }}>Cancel</button>
-                  <button type="button" onClick={handleConfirmWithReason} style={{ width: "auto", minWidth: "140px", marginTop: 0, background: label.color }}>
-                    Confirm {action === "delete" ? "Delete" : action === "lock" ? "Lock" : "Deactivate"}
-                  </button>
+                  <Button type="button" variant="secondary" onClick={() => setReasonModal(null)}>Cancel</Button>
+                  <Button type="button" variant="secondary" style={{ background: label.color, color: "#fff" }} onClick={handleConfirmWithReason}>
+                    Confirm {action === "delete" ? "delete" : action === "lock" ? "lock" : "deactivate"}
+                  </Button>
                 </div>
               </div>
             </div>
@@ -317,14 +318,14 @@ const [noteDrafts, setNoteDrafts] = useState({});
 
         {/* ===== TEMP PASSWORD ===== */}
         {tempPasswordData && (
-          <div style={{ background: "#fef9c3", border: "1px solid #fde047", borderRadius: "12px", padding: "16px", marginBottom: "20px" }}>
-            <p style={{ fontWeight: "700", color: "#92400e" }}>⚠️ Temporary Password Generated</p>
-            <p><strong>User:</strong> {tempPasswordData.email}</p>
-            <p><strong>Password:</strong>{" "}
-              <span style={{ fontFamily: "monospace", background: "#fff", padding: "2px 8px", borderRadius: "6px", border: "1px solid #e5e7eb" }}>{tempPasswordData.temporaryPassword}</span>
+          <Banner tone="warning" style={{ marginBottom: "20px", flexDirection: "column", alignItems: "flex-start" }}>
+            <p style={{ fontWeight: "700", margin: "0 0 6px" }}>⚠️ Temporary password generated</p>
+            <p style={{ margin: "0 0 4px" }}><strong>User:</strong> {tempPasswordData.email}</p>
+            <p style={{ margin: "0 0 10px" }}><strong>Password:</strong>{" "}
+              <span style={{ fontFamily: "var(--font-mono)", background: "var(--surface)", padding: "2px 8px", borderRadius: "6px", border: "1px solid var(--line)" }}>{tempPasswordData.temporaryPassword}</span>
             </p>
-            <button type="button" style={{ width: "auto", marginTop: "10px", background: "#92400e" }} onClick={() => setTempPasswordData(null)}>Dismiss</button>
-          </div>
+            <Button type="button" variant="secondary" style={{ background: "var(--warning)", color: "#fff" }} onClick={() => setTempPasswordData(null)}>Dismiss</Button>
+          </Banner>
         )}
 
         {listMessage && <p className="message">{listMessage}</p>}
@@ -333,7 +334,7 @@ const [noteDrafts, setNoteDrafts] = useState({});
         {/* ===== EDIT USER FORM ===== */}
         {editingUser && (
           <div className="dashboard-section">
-            <h3>Edit User — {editingUser.email}</h3>
+            <h3>Edit user — {editingUser.email}</h3>
             {editMessage && <p className="message">{editMessage}</p>}
             {editError && <p className="error-message">{editError}</p>}
             <form onSubmit={handleSaveEdit}>
@@ -346,8 +347,8 @@ const [noteDrafts, setNoteDrafts] = useState({});
                 <option value="ACTIVE">ACTIVE</option><option value="INACTIVE">INACTIVE</option><option value="LOCKED">LOCKED</option>
               </select>
               <div className="inline-actions">
-                <button type="submit">Save Changes</button>
-                <button type="button" onClick={() => { setEditingUser(null); setEditMessage(""); setEditError(""); }}>Cancel</button>
+                <Button type="submit" variant="primary">Save changes</Button>
+                <Button type="button" variant="secondary" onClick={() => { setEditingUser(null); setEditMessage(""); setEditError(""); }}>Cancel</Button>
               </div>
             </form>
           </div>
@@ -356,10 +357,10 @@ const [noteDrafts, setNoteDrafts] = useState({});
         {/* ===== ADD USER ===== */}
         <div className="dashboard-section">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: showAddForm ? "16px" : "0" }}>
-            <h3 style={{ margin: 0 }}>Add New User</h3>
-            <button type="button" style={{ width: "auto", minWidth: "120px", marginTop: 0 }} onClick={() => { setShowAddForm(!showAddForm); setAddMessage(""); setAddError(""); }}>
-              {showAddForm ? "Cancel" : "+ Add User"}
-            </button>
+            <h3 style={{ margin: 0 }}>Add new user</h3>
+            <Button type="button" variant="secondary" onClick={() => { setShowAddForm(!showAddForm); setAddMessage(""); setAddError(""); }}>
+              {showAddForm ? "Cancel" : "+ Add user"}
+            </Button>
           </div>
           {addMessage && <p className="message">{addMessage}</p>}
           {addError && <p className="error-message">{addError}</p>}
@@ -374,7 +375,7 @@ const [noteDrafts, setNoteDrafts] = useState({});
               <select value={addForm.status} onChange={(e) => setAddForm({ ...addForm, status: e.target.value })}>
                 <option value="ACTIVE">ACTIVE</option><option value="INACTIVE">INACTIVE</option><option value="LOCKED">LOCKED</option>
               </select>
-              <button type="submit">Add User</button>
+              <Button type="submit" variant="primary">Add user</Button>
             </form>
           )}
         </div>
@@ -382,9 +383,9 @@ const [noteDrafts, setNoteDrafts] = useState({});
         {/* ===== FILTER TOOLBAR ===== */}
         <div className="dashboard-section">
           <h3 style={{ marginBottom: "14px" }}>
-            Filter Users
+            Filter users
             {filtersActive && (
-              <span style={{ marginLeft: "10px", fontSize: "13px", background: "#dbeafe", color: "#1d4ed8", padding: "2px 10px", borderRadius: "999px", fontWeight: "600" }}>
+              <span style={{ marginLeft: "10px", fontSize: "13px", background: "var(--primary-soft)", color: "var(--primary)", padding: "2px 10px", borderRadius: "999px", fontWeight: "600" }}>
                 {totalElements} result{totalElements !== 1 ? "s" : ""}
               </span>
             )}
@@ -392,43 +393,44 @@ const [noteDrafts, setNoteDrafts] = useState({});
           <div className="dashboard-toolbar">
             <input type="text" placeholder="Search by name or email..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setPage(0); }} />
             <select value={roleFilter} onChange={(e) => { setRoleFilter(e.target.value); setPage(0); }}>
-              <option value="">All Roles</option><option value="USER">USER</option><option value="ADMIN">ADMIN</option>
+              <option value="">All roles</option><option value="USER">USER</option><option value="ADMIN">ADMIN</option>
             </select>
             <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(0); }}>
-              <option value="">All Statuses</option><option value="ACTIVE">ACTIVE</option><option value="INACTIVE">INACTIVE</option><option value="LOCKED">LOCKED</option>
+              <option value="">All statuses</option><option value="ACTIVE">ACTIVE</option><option value="INACTIVE">INACTIVE</option><option value="LOCKED">LOCKED</option>
             </select>
             <select value={sortBy} onChange={(e) => { setSortBy(e.target.value); setPage(0); }}>
-              <option value="name">Sort by Name</option><option value="email">Sort by Email</option><option value="role">Sort by Role</option><option value="status">Sort by Status</option>
+              <option value="name">Sort by name</option><option value="email">Sort by email</option><option value="role">Sort by role</option><option value="status">Sort by status</option>
             </select>
             <select value={direction} onChange={(e) => { setDirection(e.target.value); setPage(0); }}>
               <option value="asc">Ascending</option><option value="desc">Descending</option>
             </select>
-            {filtersActive && <button type="button" onClick={handleClearFilters} style={{ background: "#6b7280" }}>Clear Filters</button>}
+            {filtersActive && <Button type="button" variant="secondary" onClick={handleClearFilters}>Clear filters</Button>}
           </div>
         </div>
 
         {/* ===== BULK ACTION BAR ===== */}
         {users.length > 0 && (
-          <div style={{ background: someSelected ? "#eff6ff" : "#f9fafb", border: `1px solid ${someSelected ? "#bfdbfe" : "#e5e7eb"}`, borderRadius: "12px", padding: "12px 16px", marginBottom: "16px", display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontWeight: "600", fontSize: "14px", color: "#374151" }}>
+          <div className={`toolbar-callout ${someSelected ? "is-active" : ""}`}>
+            <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontWeight: "600", fontSize: "14px", color: "var(--ink-soft)" }}>
               <input type="checkbox" checked={allSelected} onChange={handleSelectAll} style={{ width: "16px", height: "16px", cursor: "pointer" }} />
-              {allSelected ? "Deselect All" : `Select All (${users.length})`}
+              {allSelected ? "Deselect all" : `Select all (${users.length})`}
             </label>
             {someSelected && (
               <>
-                <span style={{ fontSize: "13px", color: "#2563eb", fontWeight: "600" }}>{selectedIds.length} selected</span>
-                <select value={bulkAction} onChange={(e) => setBulkAction(e.target.value)} style={{ padding: "6px 10px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "14px", background: "#fff", cursor: "pointer", width: "auto", marginTop: 0 }}>
-                  <option value="">Select Action</option>
+                <span style={{ fontSize: "13px", color: "var(--primary)", fontWeight: "600" }}>{selectedIds.length} selected</span>
+                <select value={bulkAction} onChange={(e) => setBulkAction(e.target.value)} style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--line-strong)", fontSize: "14px", background: "var(--surface)", cursor: "pointer", width: "auto", marginTop: 0 }}>
+                  <option value="">Select action</option>
                   <option value="ACTIVATE">✅ Activate</option>
                   <option value="DEACTIVATE">⏸ Deactivate</option>
                   <option value="LOCK">🔒 Lock</option>
                   <option value="DELETE">🗑 Delete</option>
                 </select>
-                <button type="button" onClick={handleBulkAction} disabled={!bulkAction || bulkLoading}
-                  style={{ width: "auto", minWidth: "140px", marginTop: 0, background: bulkAction === "DELETE" ? "#dc2626" : bulkAction === "LOCK" ? "#7c3aed" : bulkAction === "DEACTIVATE" ? "#d97706" : "#16a34a", opacity: !bulkAction || bulkLoading ? 0.6 : 1 }}>
-                  {bulkLoading ? "Applying..." : `Apply to ${selectedIds.length}`}
-                </button>
-                <button type="button" onClick={() => setSelectedIds([])} style={{ width: "auto", minWidth: "80px", marginTop: 0, background: "#6b7280" }}>Clear</button>
+                <Button type="button" variant="secondary"
+                  style={{ background: bulkAction === "DELETE" ? "var(--danger)" : bulkAction === "LOCK" ? "#7c3aed" : bulkAction === "DEACTIVATE" ? "var(--warning)" : "var(--success)", color: "#fff", opacity: !bulkAction || bulkLoading ? 0.6 : 1 }}
+                  onClick={handleBulkAction} disabled={!bulkAction || bulkLoading}>
+                  {bulkLoading ? "Applying…" : `Apply to ${selectedIds.length}`}
+                </Button>
+                <Button type="button" variant="secondary" onClick={() => setSelectedIds([])}>Clear</Button>
               </>
             )}
           </div>
@@ -437,20 +439,20 @@ const [noteDrafts, setNoteDrafts] = useState({});
         {/* ===== ALL USERS HEADER ===== */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "8px 0 14px", flexWrap: "wrap", gap: "10px" }}>
           <h3 style={{ margin: 0 }}>
-            All Users
-            <span style={{ marginLeft: "10px", fontSize: "14px", color: "#6b7280", fontWeight: "400" }}>({totalElements} total)</span>
+            All users
+            <span style={{ marginLeft: "10px", fontSize: "14px", color: "var(--muted)", fontWeight: "400" }}>({totalElements} total)</span>
           </h3>
           <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span style={{ fontSize: "13px", color: "#6b7280", fontWeight: "500", whiteSpace: "nowrap" }}>Per page:</span>
-              <select value={size} onChange={(e) => { setSize(Number(e.target.value)); setPage(0); }} style={{ padding: "5px 8px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "13px", background: "#fff", cursor: "pointer", width: "auto", marginTop: 0 }}>
+              <span style={{ fontSize: "13px", color: "var(--muted)", fontWeight: "500", whiteSpace: "nowrap" }}>Per page:</span>
+              <select value={size} onChange={(e) => { setSize(Number(e.target.value)); setPage(0); }} style={{ padding: "6px 8px", borderRadius: "8px", border: "1px solid var(--line-strong)", fontSize: "13px", background: "var(--surface)", cursor: "pointer", width: "auto", marginTop: 0 }}>
                 <option value={5}>5</option><option value={10}>10</option><option value={25}>25</option><option value={50}>50</option>
               </select>
             </div>
-            <button type="button" onClick={handleExportCsv} disabled={exporting || totalElements === 0}
-              style={{ width: "auto", minWidth: "160px", marginTop: 0, background: exporting ? "#9ca3af" : totalElements === 0 ? "#d1d5db" : "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
-              {exporting ? "Exporting..." : "⬇ Export CSV"}
-            </button>
+            <Button type="button" variant="secondary" style={{ background: exporting ? "var(--faint)" : totalElements === 0 ? "var(--line-strong)" : "var(--success)", color: "#fff" }}
+              onClick={handleExportCsv} disabled={exporting || totalElements === 0}>
+              {exporting ? "Exporting…" : "⬇ Export CSV"}
+            </Button>
           </div>
         </div>
 
@@ -518,69 +520,71 @@ setNoteDrafts((prev) => ({
 {/* ===== ADMIN NOTE FEATURE END ===== */}
 
                   <div className="user-actions">
-                    <button type="button" onClick={() => handleOpenEdit(user)}>Edit</button>
-                    <button type="button" style={{ background: "#16a34a" }} onClick={() => handleStatusAction(user.id, "activate")} disabled={user.status === "ACTIVE"}>Activate</button>
-                    <button type="button" style={{ background: "#d97706" }} onClick={() => openReasonModal(user.id, user.email, "deactivate")} disabled={user.status === "INACTIVE"}>Deactivate</button>
-                    <button type="button" style={{ background: "#7c3aed" }} onClick={() => openReasonModal(user.id, user.email, "lock")} disabled={user.status === "LOCKED"}>Lock</button>
-                    <button type="button" style={{ background: "#0891b2" }} onClick={() => handleStatusAction(user.id, "unlock")} disabled={user.status === "ACTIVE"}>Unlock</button>
-                    <button type="button" style={{ background: "#92400e" }} onClick={() => handleResetPassword(user.id)}>Reset Password</button>
+                    <Button type="button" variant="secondary" onClick={() => handleOpenEdit(user)}>Edit</Button>
+                    <Button type="button" variant="secondary" style={{ background: "var(--success)", color: "#fff" }} onClick={() => handleStatusAction(user.id, "activate")} disabled={user.status === "ACTIVE"}>Activate</Button>
+                    <Button type="button" variant="secondary" style={{ background: "var(--warning)", color: "#fff" }} onClick={() => openReasonModal(user.id, user.email, "deactivate")} disabled={user.status === "INACTIVE"}>Deactivate</Button>
+                    <Button type="button" variant="secondary" style={{ background: "#7c3aed", color: "#fff" }} onClick={() => openReasonModal(user.id, user.email, "lock")} disabled={user.status === "LOCKED"}>Lock</Button>
+                    <Button type="button" variant="secondary" style={{ background: "var(--info)", color: "#fff" }} onClick={() => handleStatusAction(user.id, "unlock")} disabled={user.status === "ACTIVE"}>Unlock</Button>
+                    <Button type="button" variant="secondary" style={{ background: "#92400e", color: "#fff" }} onClick={() => handleResetPassword(user.id)}>Reset password</Button>
 
                     {/* ✅ Day 72 — Stats button */}
-                    <button type="button"
-                      style={{ background: statsUserId === user.id ? "#059669" : "#0f766e" }}
+                    <Button type="button" variant="secondary"
+                      style={{ background: statsUserId === user.id ? "#059669" : "#0f766e", color: "#fff" }}
                       onClick={() => handleViewStats(user)}>
-                      {statsUserId === user.id ? "Hide Stats" : "📊 Stats"}
-                    </button>
+                      {statsUserId === user.id ? "Hide stats" : "📊 Stats"}
+                    </Button>
 
-                    <button type="button" style={{ background: historyUserId === user.id ? "#1e40af" : "#374151" }} onClick={() => handleViewHistory(user)}>
-                      {historyUserId === user.id ? "Hide History" : "View History"}
-                    </button>
-                    <button type="button" className="delete-btn" onClick={() => openReasonModal(user.id, user.email, "delete")}>Delete</button>
+                    <Button type="button" variant="secondary" style={{ background: historyUserId === user.id ? "var(--primary-dark)" : "var(--ink-soft)", color: "#fff" }} onClick={() => handleViewHistory(user)}>
+                      {historyUserId === user.id ? "Hide history" : "View history"}
+                    </Button>
+                    <Button type="button" variant="danger" onClick={() => openReasonModal(user.id, user.email, "delete")}>Delete</Button>
                   </div>
                 </div>
 
                 {/* ✅ Day 72 — LOGIN STATS PANEL */}
                 {statsUserId === user.id && (
-                  <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderTop: "none", borderRadius: "0 0 12px 12px", padding: "16px", marginBottom: "4px" }}>
-                    <p style={{ fontWeight: "700", marginBottom: "12px", color: "#14532d", fontSize: "14px" }}>
-                      📊 Login Stats — {user.email}
+                  <div style={{ background: "var(--success-soft)", border: "1px solid #bbf7d0", borderTop: "none", borderRadius: "0 0 12px 12px", padding: "16px", marginBottom: "4px" }}>
+                    <p style={{ fontWeight: "700", marginBottom: "12px", color: "var(--success-dark)", fontSize: "14px" }}>
+                      📊 Login stats — {user.email}
                     </p>
 
                     {statsLoading && statsData[user.id] === undefined ? (
-                      <p style={{ color: "#6b7280", fontSize: "13px" }}>Loading stats...</p>
+                      <p style={{ color: "var(--muted)", fontSize: "13px" }}>Loading stats...</p>
                     ) : statsData[user.id]?.error ? (
                       <p className="error-message">{statsData[user.id].error}</p>
                     ) : statsData[user.id] ? (
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px" }}>
+                      <div className="stat-grid">
 
-                        <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: "10px", padding: "12px", borderTop: "3px solid #2563eb" }}>
-                          <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "#6b7280", textTransform: "uppercase" }}>Total Logins</p>
-                          <p style={{ margin: 0, fontSize: "24px", fontWeight: "800", color: "#2563eb" }}>{statsData[user.id].totalLogins ?? 0}</p>
-                          <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#9ca3af" }}>successful all time</p>
-                        </div>
+                        <StatCard
+                          label="Total logins"
+                          value={statsData[user.id].totalLogins ?? 0}
+                          sub="successful all time"
+                          accent="var(--primary)"
+                          valueColor="var(--primary)"
+                        />
 
-                        <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: "10px", padding: "12px", borderTop: "3px solid #dc2626" }}>
-                          <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "#6b7280", textTransform: "uppercase" }}>Failed (7 days)</p>
-                          <p style={{ margin: 0, fontSize: "24px", fontWeight: "800", color: statsData[user.id].recentFailedLogins > 0 ? "#dc2626" : "#111827" }}>
-                            {statsData[user.id].recentFailedLogins ?? 0}
-                          </p>
-                          <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#9ca3af" }}>
-                            {statsData[user.id].recentFailedLogins > 3 ? "⚠️ suspicious" : "✅ normal"}
-                          </p>
-                        </div>
+                        <StatCard
+                          label="Failed (7 days)"
+                          value={statsData[user.id].recentFailedLogins ?? 0}
+                          sub={statsData[user.id].recentFailedLogins > 3 ? "⚠️ suspicious" : "✅ normal"}
+                          accent={statsData[user.id].recentFailedLogins > 0 ? "var(--danger)" : "var(--line-strong)"}
+                          valueColor={statsData[user.id].recentFailedLogins > 0 ? "var(--danger)" : "var(--ink)"}
+                        />
 
-                        <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: "10px", padding: "12px", borderTop: "3px solid #7c3aed" }}>
-                          <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "#6b7280", textTransform: "uppercase" }}>Total Actions</p>
-                          <p style={{ margin: 0, fontSize: "24px", fontWeight: "800", color: "#7c3aed" }}>{statsData[user.id].totalActions ?? 0}</p>
-                          <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#9ca3af" }}>audit log entries</p>
-                        </div>
+                        <StatCard
+                          label="Total actions"
+                          value={statsData[user.id].totalActions ?? 0}
+                          sub="audit log entries"
+                          accent="#7c3aed"
+                          valueColor="#7c3aed"
+                        />
 
-                        <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: "10px", padding: "12px", borderTop: "3px solid #0891b2" }}>
-                          <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "#6b7280", textTransform: "uppercase" }}>Last Login</p>
-                          <p style={{ margin: 0, fontSize: "13px", fontWeight: "700", color: "#0891b2", lineHeight: "1.4" }}>
-                            {statsData[user.id].lastLoginAt ? formatDateTime(statsData[user.id].lastLoginAt) : "Never"}
-                          </p>
-                        </div>
+                        <StatCard
+                          label="Last login"
+                          value={statsData[user.id].lastLoginAt ? formatDateTime(statsData[user.id].lastLoginAt) : "Never"}
+                          accent="var(--info)"
+                          valueColor="var(--info)"
+                        />
 
                       </div>
                     ) : null}
@@ -589,26 +593,26 @@ setNoteDrafts((prev) => ({
 
                 {/* ===== HISTORY TIMELINE ===== */}
                 {historyUserId === user.id && (
-                  <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderTop: "none", borderRadius: "0 0 12px 12px", padding: "16px", marginBottom: "4px" }}>
-                    <p style={{ fontWeight: "700", marginBottom: "10px", color: "#1e293b", fontSize: "14px" }}>
-                      📋 Account History — {historyUserEmail}
+                  <div style={{ background: "var(--surface-sunken)", border: "1px solid var(--line)", borderTop: "none", borderRadius: "0 0 12px 12px", padding: "16px", marginBottom: "4px" }}>
+                    <p style={{ fontWeight: "700", marginBottom: "10px", color: "var(--ink)", fontSize: "14px" }}>
+                      📋 Account history — {historyUserEmail}
                     </p>
-                    {historyLoading && <p style={{ color: "#6b7280", fontSize: "13px" }}>Loading history...</p>}
+                    {historyLoading && <p style={{ color: "var(--muted)", fontSize: "13px" }}>Loading history...</p>}
                     {historyError && <p className="error-message">{historyError}</p>}
-                    {!historyLoading && historyLogs.length === 0 && <p style={{ color: "#9ca3af", fontSize: "13px" }}>No history found.</p>}
+                    {!historyLoading && historyLogs.length === 0 && <p style={{ color: "var(--faint)", fontSize: "13px" }}>No history found.</p>}
                     {!historyLoading && historyLogs.length > 0 && (
                       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                         {historyLogs.map((log) => (
-                          <div key={log.id} style={{ border: "1px solid #e5e7eb", borderRadius: "10px", padding: "12px", background: "#fff", display: "flex", gap: "12px", alignItems: "flex-start" }}>
+                          <div key={log.id} style={{ border: "1px solid var(--line)", borderRadius: "10px", padding: "12px", background: "var(--surface)", display: "flex", gap: "12px", alignItems: "flex-start" }}>
                             <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: getActionColor(log.action), flexShrink: 0, marginTop: "4px" }} />
                             <div style={{ flex: 1 }}>
                               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px", flexWrap: "wrap" }}>
-                                <span style={{ fontFamily: "monospace", background: getActionColor(log.action) + "18", color: getActionColor(log.action), padding: "2px 8px", borderRadius: "6px", fontSize: "12px", fontWeight: "700" }}>{log.action}</span>
-                                <span style={{ fontSize: "12px", color: "#6b7280" }}>by <strong>{log.actorEmail}</strong></span>
+                                <span style={{ fontFamily: "var(--font-mono)", background: getActionColor(log.action) + "18", color: getActionColor(log.action), padding: "2px 8px", borderRadius: "6px", fontSize: "12px", fontWeight: "700" }}>{log.action}</span>
+                                <span style={{ fontSize: "12px", color: "var(--muted)" }}>by <strong>{log.actorEmail}</strong></span>
                               </div>
-                              {log.details && <p style={{ margin: 0, fontSize: "12px", color: "#6b7280", lineHeight: "1.5" }}>{log.details}</p>}
+                              {log.details && <p style={{ margin: 0, fontSize: "12px", color: "var(--muted)", lineHeight: "1.5" }}>{log.details}</p>}
                             </div>
-                            <span style={{ fontSize: "11px", color: "#9ca3af", flexShrink: 0, whiteSpace: "nowrap" }}>{formatDateTime(log.createdAt)}</span>
+                            <span style={{ fontSize: "11px", color: "var(--faint)", flexShrink: 0, whiteSpace: "nowrap" }}>{formatDateTime(log.createdAt)}</span>
                           </div>
                         ))}
                       </div>
@@ -622,9 +626,9 @@ setNoteDrafts((prev) => ({
 
         {/* ===== PAGINATION ===== */}
         <div className="pagination">
-          <button type="button" onClick={() => setPage(page - 1)} disabled={page === 0}>Prev</button>
+          <Button type="button" variant="secondary" onClick={() => setPage(page - 1)} disabled={page === 0}>Prev</Button>
           <span>Page {totalPages === 0 ? 0 : page + 1} of {totalPages}</span>
-          <button type="button" onClick={() => setPage(page + 1)} disabled={page >= totalPages - 1 || totalPages === 0}>Next</button>
+          <Button type="button" variant="secondary" onClick={() => setPage(page + 1)} disabled={page >= totalPages - 1 || totalPages === 0}>Next</Button>
         </div>
 
       </div>

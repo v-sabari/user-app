@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiRequest, logoutUser } from "./apiClient";
+import { Button, Banner } from "./ui";
 
 function SecurityDashboard() {
   const navigate = useNavigate();
@@ -225,7 +226,7 @@ function SecurityDashboard() {
         {/* ===== HEADER ===== */}
         <div className="top-bar">
           <div>
-            <h2>Security Dashboard</h2>
+            <h2>Security dashboard</h2>
 
             <p className="welcome-text">
               Real-time login activity, session threats and analytics.
@@ -236,10 +237,10 @@ function SecurityDashboard() {
                 style={{
                   marginTop: "6px",
                   fontSize: "13px",
-                  color: "#6b7280",
+                  color: "var(--muted)",
                 }}
               >
-                Last Updated: {lastUpdated.toLocaleTimeString()}
+                Last updated: {lastUpdated.toLocaleTimeString()}
               </p>
             )}
           </div>
@@ -247,69 +248,64 @@ function SecurityDashboard() {
           <div className="inline-actions">
 
             {/* ===== AUTO REFRESH TOGGLE ===== */}
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={() => setAutoRefresh(!autoRefresh)}
             >
               {autoRefresh
-                ? "Auto Refresh ON"
-                : "Auto Refresh OFF"}
-            </button>
+                ? "Auto refresh: ON"
+                : "Auto refresh: OFF"}
+            </Button>
 
             {/* ===== EXPORT CSV ===== */}
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={exportEventsCSV}
             >
               Export CSV
-            </button>
+            </Button>
 
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={() => navigate("/dashboard")}
             >
               Dashboard
-            </button>
+            </Button>
 
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={() => navigate("/audit-logs")}
             >
-              Audit Logs
-            </button>
+              Audit logs
+            </Button>
 
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={() => navigate("/analytics")}
             >
               Analytics
-            </button>
+            </Button>
 
-            <button
+            <Button
               type="button"
-              className="logout-btn"
+              variant="secondary"
               onClick={handleLogout}
             >
               Logout
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* ===== SUSPICIOUS LOGIN ALERT ===== */}
         {dashboard?.suspiciousLogins > 0 && (
-          <div
-            style={{
-              background: "#fef3c7",
-              border: "1px solid #facc15",
-              color: "#92400e",
-              padding: "14px 16px",
-              borderRadius: "12px",
-              marginBottom: "20px",
-              fontWeight: "600",
-            }}
-          >
+          <Banner tone="warning" style={{ marginBottom: "20px", fontWeight: "600" }}>
             ⚠️ Warning: {dashboard.suspiciousLogins} suspicious login attempts detected.
-          </div>
+          </Banner>
         )}
 
         {/* ===== ERROR ===== */}
@@ -331,45 +327,45 @@ function SecurityDashboard() {
               <div className="analytics-grid">
 
                 <div className="analytics-card">
-                  <p>Total Audit Logs</p>
+                  <p>Total audit logs</p>
                   <h3>{dashboard?.totalLogs ?? 0}</h3>
                 </div>
 
                 <div className="analytics-card">
-                  <p>Successful Logins</p>
-                  <h3 style={{ color: "#16a34a" }}>
+                  <p>Successful logins</p>
+                  <h3 style={{ color: "var(--success)" }}>
                     {dashboard?.successfulLogins ?? 0}
                   </h3>
                 </div>
 
                 <div className="analytics-card">
-                  <p>Failed Logins</p>
-                  <h3 style={{ color: "#dc2626" }}>
+                  <p>Failed logins</p>
+                  <h3 style={{ color: "var(--danger)" }}>
                     {dashboard?.failedLogins ?? 0}
                   </h3>
                 </div>
 
                 <div className="analytics-card">
-                  <p>Suspicious Logins</p>
-                  <h3 style={{ color: "#d97706" }}>
+                  <p>Suspicious logins</p>
+                  <h3 style={{ color: "var(--warning)" }}>
                     {dashboard?.suspiciousLogins ?? 0}
                   </h3>
                 </div>
 
                 <div className="analytics-card">
-                  <p>Password Changes</p>
+                  <p>Password changes</p>
                   <h3>{dashboard?.passwordChanges ?? 0}</h3>
                 </div>
 
                 <div className="analytics-card">
-                  <p>Active Sessions</p>
-                  <h3 style={{ color: "#2563eb" }}>
+                  <p>Active sessions</p>
+                  <h3 style={{ color: "var(--primary)" }}>
                     {dashboard?.activeSessions ?? 0}
                   </h3>
                 </div>
 
                 <div className="analytics-card">
-                  <p>Login Success Rate</p>
+                  <p>Login success rate</p>
                   <h3>
                     {loginSuccessRate}
                   </h3>
@@ -380,34 +376,34 @@ function SecurityDashboard() {
 
             {/* ===== SESSION METRICS ===== */}
             <div className="dashboard-section">
-              <h3>Session Metrics</h3>
+              <h3>Session metrics</h3>
 
               {sessionMetrics ? (
                 <div className="analytics-grid">
 
                   <div className="analytics-card">
-                    <p>Total Sessions</p>
+                    <p>Total sessions</p>
                     <h3>
                       {sessionMetrics.totalActiveSessions}
                     </h3>
                   </div>
 
                   <div className="analytics-card">
-                    <p>Suspicious Sessions</p>
-                    <h3 style={{ color: "#d97706" }}>
+                    <p>Suspicious sessions</p>
+                    <h3 style={{ color: "var(--warning)" }}>
                       {sessionMetrics.suspiciousSessions}
                     </h3>
                   </div>
 
                   <div className="analytics-card">
-                    <p>Mobile Sessions</p>
+                    <p>Mobile sessions</p>
                     <h3>
                       {sessionMetrics.mobileSessions}
                     </h3>
                   </div>
 
                   <div className="analytics-card">
-                    <p>Desktop Sessions</p>
+                    <p>Desktop sessions</p>
                     <h3>
                       {sessionMetrics.desktopSessions}
                     </h3>
@@ -421,7 +417,7 @@ function SecurityDashboard() {
 
             {/* ===== TOP ACTIONS ===== */}
             <div className="dashboard-section">
-              <h3>Top Actions</h3>
+              <h3>Top actions</h3>
 
               {topActions.length === 0 ? (
                 <p>No action data available</p>
@@ -462,8 +458,8 @@ function SecurityDashboard() {
 
                             <span
                               style={{
-                                fontFamily: "monospace",
-                                background: "#f3f4f6",
+                                fontFamily: "var(--font-mono)",
+                                background: "var(--surface-sunken)",
                                 padding: "2px 8px",
                                 borderRadius: "6px",
                               }}
@@ -480,7 +476,7 @@ function SecurityDashboard() {
                         {/* ===== BAR ===== */}
                         <div
                           style={{
-                            background: "#e5e7eb",
+                            background: "var(--line)",
                             borderRadius: "999px",
                             height: "8px",
                             overflow: "hidden",
@@ -489,7 +485,7 @@ function SecurityDashboard() {
                           <div
                             style={{
                               width: `${barWidth}%`,
-                              background: "#2563eb",
+                              background: "var(--primary)",
                               height: "100%",
                               transition: "0.3s",
                             }}
@@ -513,13 +509,13 @@ function SecurityDashboard() {
                   alignItems: "center",
                 }}
               >
-                <h3>Recent Security Events</h3>
+                <h3>Recent security events</h3>
 
                 {refreshing && (
                   <span
                     style={{
                       fontSize: "13px",
-                      color: "#2563eb",
+                      color: "var(--primary)",
                     }}
                   >
                     Refreshing...
@@ -541,8 +537,8 @@ function SecurityDashboard() {
                     <div
                       key={event.id}
                       style={{
-                        background: "#ffffff",
-                        border: "1px solid #e5e7eb",
+                        background: "var(--surface)",
+                        border: "1px solid var(--line)",
                         borderRadius: "12px",
                         padding: "14px 16px",
                       }}
@@ -570,8 +566,8 @@ function SecurityDashboard() {
 
                             <span
                               style={{
-                                fontFamily: "monospace",
-                                background: "#f3f4f6",
+                                fontFamily: "var(--font-mono)",
+                                background: "var(--surface-sunken)",
                                 padding: "2px 10px",
                                 borderRadius: "6px",
                                 fontWeight: "700",
@@ -616,7 +612,7 @@ function SecurityDashboard() {
                           {event.details && (
                             <p
                               style={{
-                                color: "#6b7280",
+                                color: "var(--muted)",
                               }}
                             >
                               {event.details}
@@ -627,7 +623,7 @@ function SecurityDashboard() {
 
                         <small
                           style={{
-                            color: "#9ca3af",
+                            color: "var(--faint)",
                           }}
                         >
                           {formatDateTime(
@@ -649,16 +645,13 @@ function SecurityDashboard() {
                 marginTop: "10px",
               }}
             >
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={() => fetchAll()}
-                style={{
-                  width: "auto",
-                  minWidth: "220px",
-                }}
               >
-                Refresh Dashboard
-              </button>
+                Refresh dashboard
+              </Button>
             </div>
           </>
         )}

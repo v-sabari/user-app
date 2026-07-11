@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiRequest, logoutUser } from "./apiClient";
+import { Button, StatCard } from "./ui";
 
 /**
  * ✅ Day 76 — Risk Assessment Component (Admin)
@@ -172,84 +173,62 @@ function RiskAssessment() {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
+    <div className="container">
+      <div className="card">
         {/* ===== HEADER ===== */}
-        <div style={styles.header}>
+        <div className="top-bar">
           <div>
-            <h2>Risk Assessment</h2>
-            <p style={styles.subText}>Security risk analysis for all accounts</p>
+            <h2>Risk assessment</h2>
+            <p className="welcome-text">Security risk analysis for all accounts</p>
           </div>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-            <button style={{ ...styles.btn, background: "#2563eb" }} onClick={() => navigate("/dashboard")}>
-              Dashboard
-            </button>
-            <button style={styles.btn} onClick={handleLogout}>
-              Logout
-            </button>
+          <div className="inline-actions">
+            <Button variant="secondary" onClick={() => navigate("/dashboard")}>Dashboard</Button>
+            <Button variant="secondary" onClick={handleLogout}>Logout</Button>
           </div>
         </div>
 
         {message && (
-          <p style={{ ...styles.message, color: message.includes("✅") ? "#16a34a" : "#dc2626" }}>
+          <p className="message" style={{ color: message.includes("✅") ? "var(--success)" : "var(--danger)" }}>
             {message}
           </p>
         )}
 
         {/* ===== FILTERS & CONTROLS ===== */}
-        <div style={styles.filterSection}>
+        <div className="dashboard-toolbar">
           <input
             type="text"
             placeholder="Search by name or email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={styles.input}
           />
 
-          <select
-            value={riskLevelFilter}
-            onChange={(e) => setRiskLevelFilter(e.target.value)}
-            style={styles.select}
-          >
-            <option value="">All Risk Levels</option>
+          <select value={riskLevelFilter} onChange={(e) => setRiskLevelFilter(e.target.value)}>
+            <option value="">All risk levels</option>
             <option value="SECURE">✅ Secure</option>
             <option value="CAUTION">⚠️ Caution</option>
-            <option value="AT_RISK">⚠️ At Risk</option>
+            <option value="AT_RISK">⚠️ At risk</option>
             <option value="CRITICAL">🔴 Critical</option>
           </select>
 
-          <select
-            value={sortBy}
-            onChange={(e) => {
-              setSortBy(e.target.value);
-            }}
-            style={styles.select}
-          >
-            <option value="riskScore">Sort by Risk Score</option>
-            <option value="name">Sort by Name</option>
-            <option value="email">Sort by Email</option>
-            <option value="status">Sort by Status</option>
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+            <option value="riskScore">Sort by risk score</option>
+            <option value="name">Sort by name</option>
+            <option value="email">Sort by email</option>
+            <option value="status">Sort by status</option>
           </select>
 
-          <select
-            value={direction}
-            onChange={(e) => setDirection(e.target.value)}
-            style={styles.select}
-          >
+          <select value={direction} onChange={(e) => setDirection(e.target.value)}>
             <option value="desc">Descending</option>
             <option value="asc">Ascending</option>
           </select>
 
-          <button
-            style={{ ...styles.btn, background: "#16a34a" }}
-            onClick={handleExportCsv}
-            disabled={exporting || filteredAssessments.length === 0}
-          >
-            {exporting ? "Exporting..." : "⬇ Export CSV"}
-          </button>
+          <Button variant="secondary" style={{ background: "var(--success)", color: "#fff" }}
+            onClick={handleExportCsv} disabled={exporting || filteredAssessments.length === 0}>
+            {exporting ? "Exporting…" : "⬇ Export CSV"}
+          </Button>
 
-          <button
-            style={{ ...styles.btn, background: "#111827" }}
+          <Button
+            variant="secondary"
             onClick={() => {
               setSearchTerm("");
               setRiskLevelFilter("");
@@ -257,87 +236,64 @@ function RiskAssessment() {
               setDirection("desc");
             }}
           >
-            Reset Filters
-          </button>
+            Reset filters
+          </Button>
         </div>
 
         {/* ===== SUMMARY STATS ===== */}
         {!loading && assessments.length > 0 && (
-          <div style={styles.summaryGrid}>
-            <div style={{ ...styles.summaryCard, borderTopColor: "#16a34a" }}>
-              <p style={styles.summaryLabel}>Secure</p>
-              <p style={{ ...styles.summaryValue, color: "#16a34a" }}>
-                {assessments.filter((a) => a.riskLevel === "SECURE").length}
-              </p>
-            </div>
-            <div style={{ ...styles.summaryCard, borderTopColor: "#d97706" }}>
-              <p style={styles.summaryLabel}>Caution</p>
-              <p style={{ ...styles.summaryValue, color: "#d97706" }}>
-                {assessments.filter((a) => a.riskLevel === "CAUTION").length}
-              </p>
-            </div>
-            <div style={{ ...styles.summaryCard, borderTopColor: "#ea580c" }}>
-              <p style={styles.summaryLabel}>At Risk</p>
-              <p style={{ ...styles.summaryValue, color: "#ea580c" }}>
-                {assessments.filter((a) => a.riskLevel === "AT_RISK").length}
-              </p>
-            </div>
-            <div style={{ ...styles.summaryCard, borderTopColor: "#dc2626" }}>
-              <p style={styles.summaryLabel}>Critical</p>
-              <p style={{ ...styles.summaryValue, color: "#dc2626" }}>
-                {assessments.filter((a) => a.riskLevel === "CRITICAL").length}
-              </p>
-            </div>
+          <div className="stat-grid" style={{ marginBottom: "20px" }}>
+            <StatCard label="Secure" value={assessments.filter((a) => a.riskLevel === "SECURE").length} accent="var(--success)" valueColor="var(--success)" />
+            <StatCard label="Caution" value={assessments.filter((a) => a.riskLevel === "CAUTION").length} accent="var(--warning)" valueColor="var(--warning)" />
+            <StatCard label="At risk" value={assessments.filter((a) => a.riskLevel === "AT_RISK").length} accent="#ea580c" valueColor="#ea580c" />
+            <StatCard label="Critical" value={assessments.filter((a) => a.riskLevel === "CRITICAL").length} accent="var(--danger)" valueColor="var(--danger)" />
           </div>
         )}
 
         {/* ===== TABLE ===== */}
         {loading ? (
-          <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af" }}>
+          <div style={{ textAlign: "center", padding: "40px 0", color: "var(--faint)" }}>
             <p>Loading risk assessment...</p>
           </div>
         ) : filteredAssessments.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af" }}>
+          <div style={{ textAlign: "center", padding: "40px 0", color: "var(--faint)" }}>
             <p>
               {searchTerm || riskLevelFilter ? "No users match your filters." : "No users found."}
             </p>
           </div>
         ) : (
-          <div style={styles.tableWrapper}>
-            <table style={styles.table}>
+          <div className="data-table-wrapper">
+            <table className="data-table">
               <thead>
-                <tr style={styles.tableHeaderRow}>
-                  <th style={styles.tableHeader}>Name</th>
-                  <th style={styles.tableHeader}>Email</th>
-                  <th style={styles.tableHeader}>Risk Score</th>
-                  <th style={styles.tableHeader}>Risk Level</th>
-                  <th style={styles.tableHeader}>Status</th>
-                  <th style={styles.tableHeader}>Failed Logins</th>
-                  <th style={styles.tableHeader}>Last Login</th>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Risk score</th>
+                  <th>Risk level</th>
+                  <th>Status</th>
+                  <th>Failed logins</th>
+                  <th>Last login</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredAssessments.map((assessment) => (
                   <tr
                     key={assessment.userId}
-                    style={{
-                      ...styles.tableRow,
-                      borderLeftColor: assessment.riskColor,
-                    }}
+                    style={{ borderLeftColor: assessment.riskColor }}
                     onClick={() => navigate(`/users`)}
                     title="Click to view in user management"
                   >
-                    <td style={styles.tableCell}>
-                      <span style={{ fontWeight: "600", color: "#111827" }}>
+                    <td>
+                      <span style={{ fontWeight: "600", color: "var(--ink)" }}>
                         {assessment.name}
                       </span>
                     </td>
-                    <td style={styles.tableCell}>
-                      <span style={{ fontSize: "13px", color: "#6b7280", fontFamily: "monospace" }}>
+                    <td>
+                      <span style={{ fontSize: "13px", color: "var(--muted)", fontFamily: "var(--font-mono)" }}>
                         {assessment.email}
                       </span>
                     </td>
-                    <td style={styles.tableCell}>
+                    <td>
                       <span
                         style={{
                           fontWeight: "700",
@@ -348,12 +304,12 @@ function RiskAssessment() {
                         {assessment.riskScore}
                       </span>
                     </td>
-                    <td style={styles.tableCell}>
+                    <td>
                       <span
                         style={{
                           ...getRiskBadgeStyle(assessment.riskLevel),
                           padding: "4px 8px",
-                          borderRadius: "6px",
+                          borderRadius: "var(--r-sm)",
                           fontSize: "11px",
                           fontWeight: "700",
                           display: "inline-block",
@@ -368,10 +324,10 @@ function RiskAssessment() {
                           : "🔴 Critical"}
                       </span>
                     </td>
-                    <td style={styles.tableCell}>
+                    <td>
                       <span
                         style={{
-                          color: assessment.status === "ACTIVE" ? "#16a34a" : "#dc2626",
+                          color: assessment.status === "ACTIVE" ? "var(--success)" : "var(--danger)",
                           fontWeight: "600",
                           fontSize: "13px",
                         }}
@@ -379,23 +335,23 @@ function RiskAssessment() {
                         {assessment.status}
                       </span>
                     </td>
-                    <td style={styles.tableCell}>
+                    <td>
                       <span
                         style={{
                           color:
                             assessment.failedLoginsLast7Days > 3
-                              ? "#dc2626"
+                              ? "var(--danger)"
                               : assessment.failedLoginsLast7Days > 0
-                              ? "#d97706"
-                              : "#16a34a",
+                              ? "var(--warning)"
+                              : "var(--success)",
                           fontWeight: "600",
                         }}
                       >
                         {assessment.failedLoginsLast7Days}
                       </span>
                     </td>
-                    <td style={styles.tableCell}>
-                      <span style={{ fontSize: "13px", color: "#6b7280" }}>
+                    <td>
+                      <span style={{ fontSize: "13px", color: "var(--muted)" }}>
                         {formatLastLogin(assessment.lastLogin)}
                       </span>
                     </td>
@@ -408,7 +364,7 @@ function RiskAssessment() {
 
         {/* ===== FOOTER INFO ===== */}
         {!loading && filteredAssessments.length > 0 && (
-          <div style={styles.footerInfo}>
+          <div style={{ padding: "12px 0", fontSize: "13px", color: "var(--muted)", textAlign: "center", borderTop: "1px solid var(--line)" }}>
             <p>
               Showing <strong>{filteredAssessments.length}</strong> of{" "}
               <strong>{assessments.length}</strong> users
@@ -420,145 +376,5 @@ function RiskAssessment() {
     </div>
   );
 }
-
-/* ===== STYLES ===== */
-const styles = {
-  container: {
-    maxWidth: "1400px",
-    margin: "auto",
-    padding: "30px",
-  },
-  card: {
-    border: "1px solid #e5e7eb",
-    borderRadius: "12px",
-    padding: "24px",
-    background: "#ffffff",
-    boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: "24px",
-    flexWrap: "wrap",
-    gap: "12px",
-  },
-  subText: {
-    color: "#6b7280",
-    margin: "4px 0 0",
-    fontSize: "14px",
-  },
-  btn: {
-    padding: "8px 14px",
-    cursor: "pointer",
-    border: "none",
-    borderRadius: "6px",
-    color: "white",
-    background: "#374151",
-    fontSize: "13px",
-    fontWeight: "600",
-  },
-  message: {
-    padding: "12px 16px",
-    borderRadius: "8px",
-    marginBottom: "20px",
-    background: "#f0fdf4",
-    border: "1px solid #dcfce7",
-  },
-  filterSection: {
-    display: "flex",
-    gap: "10px",
-    flexWrap: "wrap",
-    marginBottom: "20px",
-    padding: "16px",
-    background: "#f9fafb",
-    borderRadius: "8px",
-    alignItems: "center",
-  },
-  input: {
-    flex: 1,
-    minWidth: "200px",
-    padding: "8px 12px",
-    border: "1px solid #d1d5db",
-    borderRadius: "6px",
-    fontSize: "14px",
-  },
-  select: {
-    padding: "8px 12px",
-    border: "1px solid #d1d5db",
-    borderRadius: "6px",
-    fontSize: "14px",
-    cursor: "pointer",
-    background: "white",
-  },
-  summaryGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-    gap: "12px",
-    marginBottom: "20px",
-  },
-  summaryCard: {
-    borderTop: "3px solid",
-    border: "1px solid #e5e7eb",
-    borderRadius: "8px",
-    padding: "14px",
-    background: "#f9fafb",
-    textAlign: "center",
-  },
-  summaryLabel: {
-    margin: "0 0 6px",
-    fontSize: "12px",
-    fontWeight: "600",
-    color: "#6b7280",
-    textTransform: "uppercase",
-    letterSpacing: "0.05em",
-  },
-  summaryValue: {
-    margin: 0,
-    fontSize: "28px",
-    fontWeight: "800",
-    lineHeight: "1",
-  },
-  tableWrapper: {
-    overflowX: "auto",
-    marginBottom: "16px",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    fontSize: "14px",
-  },
-  tableHeaderRow: {
-    background: "#f3f4f6",
-    borderBottom: "2px solid #e5e7eb",
-  },
-  tableHeader: {
-    padding: "12px 16px",
-    textAlign: "left",
-    fontWeight: "700",
-    color: "#374151",
-    fontSize: "12px",
-    textTransform: "uppercase",
-    letterSpacing: "0.05em",
-  },
-  tableRow: {
-    borderLeft: "4px solid",
-    borderBottom: "1px solid #e5e7eb",
-    cursor: "pointer",
-    transition: "background 0.2s",
-    "&:hover": { background: "#f9fafb" },
-  },
-  tableCell: {
-    padding: "12px 16px",
-    color: "#374151",
-  },
-  footerInfo: {
-    padding: "12px 0",
-    fontSize: "13px",
-    color: "#6b7280",
-    textAlign: "center",
-    borderTop: "1px solid #e5e7eb",
-  },
-};
 
 export default RiskAssessment;

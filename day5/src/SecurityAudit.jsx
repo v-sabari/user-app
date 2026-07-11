@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiRequest, logoutUser } from "./apiClient";
+import { Button } from "./ui";
 
 /**
  * ✅ Day 76 — Security Audit Component
@@ -62,38 +63,34 @@ function SecurityAudit() {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
+    <div className="container">
+      <div className="card">
         {/* ===== HEADER ===== */}
-        <div style={styles.header}>
+        <div className="top-bar">
           <div>
-            <h2>Security Audit</h2>
-            <p style={styles.subText}>Your account's security score & recommendations</p>
+            <h2>Security audit</h2>
+            <p className="welcome-text">Your account's security score &amp; recommendations</p>
           </div>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-            <button style={{ ...styles.btn, background: "#2563eb" }} onClick={() => navigate("/dashboard")}>
-              Dashboard
-            </button>
-            <button style={styles.btn} onClick={handleLogout}>
-              Logout
-            </button>
+          <div className="inline-actions">
+            <Button variant="secondary" onClick={() => navigate("/dashboard")}>Dashboard</Button>
+            <Button variant="secondary" onClick={handleLogout}>Logout</Button>
           </div>
         </div>
 
-        {message && <p style={styles.errorText}>{message}</p>}
+        {message && <p className="error-message">{message}</p>}
 
         {loading ? (
-          <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af" }}>
+          <div style={{ textAlign: "center", padding: "40px 0", color: "var(--faint)" }}>
             <p>Loading your security score...</p>
           </div>
         ) : !metrics ? (
-          <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af" }}>
+          <div style={{ textAlign: "center", padding: "40px 0", color: "var(--faint)" }}>
             <p>Unable to load security metrics</p>
           </div>
         ) : (
           <>
             {/* ===== MAIN SCORE CARD ===== */}
-            <div style={{ ...styles.scoreCard, borderTop: `4px solid ${metrics.riskColor}` }}>
+            <div className="security-score-panel" style={{ borderTop: `4px solid ${metrics.riskColor}`, marginBottom: "20px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "20px", flexWrap: "wrap" }}>
                 {/* Score Circle */}
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
@@ -116,7 +113,7 @@ function SecurityAudit() {
                       {metrics.riskScore <= 25 ? "SECURE" : metrics.riskScore <= 50 ? "CAUTION" : metrics.riskScore <= 75 ? "AT RISK" : "CRITICAL"}
                     </div>
                   </div>
-                  <p style={{ margin: 0, fontSize: "12px", color: "#6b7280", textAlign: "center", fontWeight: "500" }}>
+                  <p style={{ margin: 0, fontSize: "12px", color: "var(--muted)", textAlign: "center", fontWeight: "500" }}>
                     {metrics.riskLevel === "SECURE"
                       ? "✅ Your account is secure"
                       : metrics.riskLevel === "CAUTION"
@@ -129,49 +126,49 @@ function SecurityAudit() {
 
                 {/* Details */}
                 <div style={{ flex: 1, minWidth: "280px" }}>
-                  <h3 style={{ margin: "0 0 16px", fontSize: "16px", color: "#111827", fontWeight: "700" }}>
-                    Account Overview
+                  <h3 style={{ margin: "0 0 16px", fontSize: "16px", color: "var(--ink)", fontWeight: "700" }}>
+                    Account overview
                   </h3>
 
-                  <div style={styles.detailRow}>
-                    <span style={styles.detailLabel}>Email</span>
-                    <span style={styles.detailValue}>{metrics.email}</span>
+                  <div className="detail-row">
+                    <span className="detail-label">Email</span>
+                    <span className="detail-value">{metrics.email}</span>
                   </div>
 
-                  <div style={styles.detailRow}>
-                    <span style={styles.detailLabel}>Role</span>
-                    <span style={{ ...styles.detailValue, background: metrics.role === "ADMIN" ? "#f5f3ff" : "#f9fafb", color: metrics.role === "ADMIN" ? "#7c3aed" : "#374151", padding: "2px 8px", borderRadius: "4px", fontSize: "12px", fontWeight: "600" }}>
+                  <div className="detail-row">
+                    <span className="detail-label">Role</span>
+                    <span className="detail-value" style={{ background: metrics.role === "ADMIN" ? "#f5f3ff" : "var(--surface-sunken)", color: metrics.role === "ADMIN" ? "#7c3aed" : "var(--ink-soft)", padding: "2px 8px", borderRadius: "var(--r-sm)", fontSize: "12px", fontWeight: "600" }}>
                       {metrics.role}
                     </span>
                   </div>
 
-                  <div style={styles.detailRow}>
-                    <span style={styles.detailLabel}>Account Status</span>
-                    <span style={{ ...styles.detailValue, color: metrics.status === "ACTIVE" ? "#16a34a" : "#dc2626", fontWeight: "600" }}>
+                  <div className="detail-row">
+                    <span className="detail-label">Account status</span>
+                    <span className="detail-value" style={{ color: metrics.status === "ACTIVE" ? "var(--success)" : "var(--danger)", fontWeight: "600" }}>
                       {metrics.status}
                     </span>
                   </div>
 
-                  <div style={styles.detailRow}>
-                    <span style={styles.detailLabel}>Last Login</span>
-                    <span style={styles.detailValue}>{formatLastLogin(metrics.lastLogin)}</span>
+                  <div className="detail-row">
+                    <span className="detail-label">Last login</span>
+                    <span className="detail-value">{formatLastLogin(metrics.lastLogin)}</span>
                   </div>
 
-                  <div style={styles.detailRow}>
-                    <span style={styles.detailLabel}>Password Age</span>
-                    <span style={{ ...styles.detailValue, color: metrics.passwordAgeDays > 90 ? "#dc2626" : "#111827" }}>
+                  <div className="detail-row">
+                    <span className="detail-label">Password age</span>
+                    <span className="detail-value" style={{ color: metrics.passwordAgeDays > 90 ? "var(--danger)" : "var(--ink)" }}>
                       {formatDaysAgo(metrics.passwordAgeDays)}
                     </span>
                   </div>
 
-                  <div style={styles.detailRow}>
-                    <span style={styles.detailLabel}>Total Actions</span>
-                    <span style={styles.detailValue}>{metrics.totalActions}</span>
+                  <div className="detail-row">
+                    <span className="detail-label">Total actions</span>
+                    <span className="detail-value">{metrics.totalActions}</span>
                   </div>
 
-                  <div style={styles.detailRow}>
-                    <span style={styles.detailLabel}>Failed Logins (7 days)</span>
-                    <span style={{ ...styles.detailValue, color: metrics.failedLoginsLast7Days > 0 ? "#dc2626" : "#16a34a" }}>
+                  <div className="detail-row" style={{ marginBottom: 0, borderBottom: "none", paddingBottom: 0 }}>
+                    <span className="detail-label">Failed logins (7 days)</span>
+                    <span className="detail-value" style={{ color: metrics.failedLoginsLast7Days > 0 ? "var(--danger)" : "var(--success)" }}>
                       {metrics.failedLoginsLast7Days}
                     </span>
                   </div>
@@ -180,17 +177,17 @@ function SecurityAudit() {
             </div>
 
             {/* ===== RISK BREAKDOWN ===== */}
-            <div style={styles.sectionCard}>
-              <h3 style={styles.sectionTitle}>Risk Factors</h3>
+            <div className="dashboard-section">
+              <h3>Risk factors</h3>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "12px" }}>
+              <div className="stat-grid">
                 {/* Failed Logins */}
-                <div style={{ ...styles.riskFactorCard, borderColor: metrics.failedLoginsLast7Days > 3 ? "#dc2626" : "#16a34a" }}>
-                  <p style={styles.riskFactorLabel}>Failed Logins (7d)</p>
-                  <p style={{ ...styles.riskFactorValue, color: metrics.failedLoginsLast7Days > 3 ? "#dc2626" : "#16a34a" }}>
+                <div className="stat-card" style={{ borderTop: `3px solid ${metrics.failedLoginsLast7Days > 3 ? "var(--danger)" : "var(--success)"}`, textAlign: "center" }}>
+                  <p className="stat-label">Failed logins (7d)</p>
+                  <p className="stat-value" style={{ color: metrics.failedLoginsLast7Days > 3 ? "var(--danger)" : "var(--success)", fontSize: "22px" }}>
                     {metrics.failedLoginsLast7Days}
                   </p>
-                  <p style={styles.riskFactorSub}>
+                  <p className="stat-sub">
                     {metrics.failedLoginsLast7Days === 0
                       ? "✅ Clean"
                       : metrics.failedLoginsLast7Days <= 3
@@ -200,12 +197,12 @@ function SecurityAudit() {
                 </div>
 
                 {/* Password Age */}
-                <div style={{ ...styles.riskFactorCard, borderColor: metrics.passwordAgeDays > 90 ? "#dc2626" : "#16a34a" }}>
-                  <p style={styles.riskFactorLabel}>Password Age</p>
-                  <p style={{ ...styles.riskFactorValue, color: metrics.passwordAgeDays > 90 ? "#dc2626" : "#16a34a" }}>
+                <div className="stat-card" style={{ borderTop: `3px solid ${metrics.passwordAgeDays > 90 ? "var(--danger)" : "var(--success)"}`, textAlign: "center" }}>
+                  <p className="stat-label">Password age</p>
+                  <p className="stat-value" style={{ color: metrics.passwordAgeDays > 90 ? "var(--danger)" : "var(--success)", fontSize: "22px" }}>
                     {metrics.passwordAgeDays <= 0 ? "New" : `${Math.min(metrics.passwordAgeDays, 365)}d`}
                   </p>
-                  <p style={styles.riskFactorSub}>
+                  <p className="stat-sub">
                     {metrics.passwordAgeDays <= 0
                       ? "✅ Recently changed"
                       : metrics.passwordAgeDays <= 90
@@ -215,23 +212,23 @@ function SecurityAudit() {
                 </div>
 
                 {/* Account Status */}
-                <div style={{ ...styles.riskFactorCard, borderColor: metrics.status === "ACTIVE" ? "#16a34a" : "#dc2626" }}>
-                  <p style={styles.riskFactorLabel}>Account Status</p>
-                  <p style={{ ...styles.riskFactorValue, color: metrics.status === "ACTIVE" ? "#16a34a" : "#dc2626" }}>
+                <div className="stat-card" style={{ borderTop: `3px solid ${metrics.status === "ACTIVE" ? "var(--success)" : "var(--danger)"}`, textAlign: "center" }}>
+                  <p className="stat-label">Account status</p>
+                  <p className="stat-value" style={{ color: metrics.status === "ACTIVE" ? "var(--success)" : "var(--danger)", fontSize: "22px" }}>
                     {metrics.status}
                   </p>
-                  <p style={styles.riskFactorSub}>
+                  <p className="stat-sub">
                     {metrics.status === "ACTIVE" ? "✅ Active" : "🔴 Needs review"}
                   </p>
                 </div>
 
                 {/* Activity Level */}
-                <div style={{ ...styles.riskFactorCard, borderColor: metrics.lastActivity && new Date(metrics.lastActivity) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) ? "#16a34a" : "#d97706" }}>
-                  <p style={styles.riskFactorLabel}>Recent Activity</p>
-                  <p style={{ ...styles.riskFactorValue, color: metrics.lastActivity && new Date(metrics.lastActivity) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) ? "#16a34a" : "#d97706" }}>
+                <div className="stat-card" style={{ borderTop: `3px solid ${metrics.lastActivity && new Date(metrics.lastActivity) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) ? "var(--success)" : "var(--warning)"}`, textAlign: "center" }}>
+                  <p className="stat-label">Recent activity</p>
+                  <p className="stat-value" style={{ color: metrics.lastActivity && new Date(metrics.lastActivity) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) ? "var(--success)" : "var(--warning)", fontSize: "22px" }}>
                     {metrics.lastActivity ? "Yes" : "No"}
                   </p>
-                  <p style={styles.riskFactorSub}>
+                  <p className="stat-sub">
                     {metrics.lastActivity && new Date(metrics.lastActivity) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
                       ? "✅ Active"
                       : "⚠️ Inactive"}
@@ -241,15 +238,15 @@ function SecurityAudit() {
             </div>
 
             {/* ===== RECOMMENDATIONS ===== */}
-            <div style={styles.sectionCard}>
-              <h3 style={styles.sectionTitle}>
+            <div className="dashboard-section">
+              <h3>
                 {metrics.riskLevel === "SECURE" ? "✅ Keep it up!" : "📋 Recommendations"}
               </h3>
 
               {recommendations.length === 0 ? (
-                <p style={{ color: "#9ca3af", margin: 0 }}>No recommendations at this time.</p>
+                <p style={{ color: "var(--faint)", margin: 0 }}>No recommendations at this time.</p>
               ) : (
-                <ul style={{ margin: 0, paddingLeft: "20px", color: "#374151" }}>
+                <ul style={{ margin: 0, paddingLeft: "20px", color: "var(--ink-soft)" }}>
                   {recommendations.map((rec, idx) => (
                     <li key={idx} style={{ marginBottom: "12px", lineHeight: "1.5", fontSize: "14px" }}>
                       {rec}
@@ -260,31 +257,11 @@ function SecurityAudit() {
             </div>
 
             {/* ===== ACTION BUTTONS ===== */}
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "20px" }}>
-              <button
-                style={{ ...styles.btn, background: "#2563eb" }}
-                onClick={() => navigate("/profile")}
-              >
-                Change Password
-              </button>
-              <button
-                style={{ ...styles.btn, background: "#0891b2" }}
-                onClick={() => navigate("/my-activity")}
-              >
-                View Activity Log
-              </button>
-              <button
-                style={{ ...styles.btn, background: "#7c3aed" }}
-                onClick={() => navigate("/dashboard")}
-              >
-                Manage Sessions
-              </button>
-              <button
-                style={{ ...styles.btn, background: "#111827" }}
-                onClick={fetchSecurityScore}
-              >
-                Refresh Score
-              </button>
+            <div className="inline-actions" style={{ marginTop: "20px" }}>
+              <Button variant="secondary" onClick={() => navigate("/profile")}>Change password</Button>
+              <Button variant="secondary" style={{ background: "var(--info)", color: "#fff" }} onClick={() => navigate("/my-activity")}>View activity log</Button>
+              <Button variant="secondary" style={{ background: "#7c3aed", color: "#fff" }} onClick={() => navigate("/dashboard")}>Manage sessions</Button>
+              <Button variant="secondary" onClick={fetchSecurityScore}>Refresh score</Button>
             </div>
           </>
         )}
@@ -292,117 +269,5 @@ function SecurityAudit() {
     </div>
   );
 }
-
-/* ===== STYLES ===== */
-const styles = {
-  container: {
-    maxWidth: "1100px",
-    margin: "auto",
-    padding: "30px",
-  },
-  card: {
-    border: "1px solid #e5e7eb",
-    borderRadius: "12px",
-    padding: "24px",
-    background: "#ffffff",
-    boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: "24px",
-    flexWrap: "wrap",
-    gap: "12px",
-  },
-  subText: {
-    color: "#6b7280",
-    margin: "4px 0 0",
-    fontSize: "14px",
-  },
-  btn: {
-    padding: "8px 16px",
-    cursor: "pointer",
-    border: "none",
-    borderRadius: "6px",
-    color: "white",
-    background: "#374151",
-    fontSize: "14px",
-    fontWeight: "500",
-  },
-  errorText: {
-    color: "#dc2626",
-    background: "#fee2e2",
-    padding: "12px 16px",
-    borderRadius: "8px",
-    margin: "0 0 20px",
-  },
-  scoreCard: {
-    border: "1px solid #e5e7eb",
-    borderRadius: "12px",
-    padding: "20px",
-    background: "#f9fafb",
-    marginBottom: "20px",
-  },
-  sectionCard: {
-    border: "1px solid #e5e7eb",
-    borderRadius: "12px",
-    padding: "20px",
-    marginBottom: "20px",
-    background: "#ffffff",
-  },
-  sectionTitle: {
-    margin: "0 0 16px",
-    fontSize: "16px",
-    fontWeight: "700",
-    color: "#111827",
-  },
-  detailRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingBottom: "12px",
-    borderBottom: "1px solid #e5e7eb",
-    marginBottom: "12px",
-    gap: "12px",
-  },
-  detailLabel: {
-    fontSize: "13px",
-    fontWeight: "600",
-    color: "#6b7280",
-  },
-  detailValue: {
-    fontSize: "14px",
-    color: "#111827",
-    fontWeight: "500",
-  },
-  riskFactorCard: {
-    border: "2px solid",
-    borderRadius: "8px",
-    padding: "14px",
-    background: "#f9fafb",
-    textAlign: "center",
-  },
-  riskFactorLabel: {
-    margin: "0 0 6px",
-    fontSize: "11px",
-    fontWeight: "700",
-    color: "#6b7280",
-    textTransform: "uppercase",
-    letterSpacing: "0.05em",
-  },
-  riskFactorValue: {
-    margin: "0 0 4px",
-    fontSize: "20px",
-    fontWeight: "800",
-    color: "#111827",
-    lineHeight: "1",
-  },
-  riskFactorSub: {
-    margin: 0,
-    fontSize: "12px",
-    color: "#9ca3af",
-  },
-};
 
 export default SecurityAudit;

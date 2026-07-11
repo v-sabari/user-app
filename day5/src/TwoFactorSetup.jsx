@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiRequest, logoutUser } from "./apiClient";
+import { Button, Banner } from "./ui";
 
 /**
  * ✅ Day 81 — Two Factor Authentication Setup
@@ -100,73 +101,51 @@ function TwoFactorSetup() {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
+    <div className="container">
+      <div className="card" style={{ maxWidth: "700px" }}>
         {/* ===== HEADER ===== */}
-        <div style={styles.header}>
+        <div className="top-bar">
           <div>
-            <h2>🔐 Two-Factor Authentication</h2>
-            <p style={styles.subText}>Secure your account with 2FA</p>
+            <h2>🔐 Two-factor authentication</h2>
+            <p className="welcome-text">Secure your account with 2FA</p>
           </div>
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button
-              style={{ ...styles.btn, background: "#2563eb" }}
-              onClick={() => navigate("/profile")}
-            >
-              Back to Profile
-            </button>
-            <button style={styles.btn} onClick={handleLogout}>
-              Logout
-            </button>
+          <div className="inline-actions">
+            <Button variant="secondary" onClick={() => navigate("/profile")}>Back to profile</Button>
+            <Button variant="secondary" onClick={handleLogout}>Logout</Button>
           </div>
         </div>
 
         {message && (
-          <div
-            style={{
-              ...styles.messageBox,
-              background: messageType === "success" ? "#dcfce7" : "#fee2e2",
-              borderColor: messageType === "success" ? "#86efac" : "#fca5a5",
-              color: messageType === "success" ? "#15803d" : "#991b1b",
-            }}
-          >
+          <Banner tone={messageType === "success" ? "success" : "danger"} style={{ marginBottom: "20px" }}>
             {message}
-          </div>
+          </Banner>
         )}
 
         {/* ===== STEP 1: CHOOSE METHOD ===== */}
         {step === "method" && (
-          <div style={styles.section}>
-            <h3>Choose Your 2FA Method</h3>
-            <p style={styles.sectionDesc}>Select how you want to secure your account</p>
+          <div style={{ marginBottom: "24px" }}>
+            <h3>Choose your 2FA method</h3>
+            <p className="welcome-text" style={{ marginBottom: "16px" }}>Select how you want to secure your account</p>
 
-            <div style={styles.methodGrid}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px" }}>
               {/* TOTP */}
-              <div style={styles.methodCard}>
-                <div style={styles.methodIcon}>📱</div>
-                <h4>Google Authenticator</h4>
-                <p>Use an authenticator app for codes</p>
-                <button
-                  style={{ ...styles.btn, background: "#2563eb" }}
-                  onClick={generateTotpSecret}
-                  disabled={loading}
-                >
-                  {loading ? "Setting up..." : "Setup TOTP →"}
-                </button>
+              <div className="stat-card" style={{ textAlign: "center", padding: "20px" }}>
+                <div style={{ fontSize: "40px", marginBottom: "12px" }}>📱</div>
+                <h4 style={{ margin: "0 0 6px" }}>Google Authenticator</h4>
+                <p style={{ margin: "0 0 16px", color: "var(--muted)", fontSize: "13px" }}>Use an authenticator app for codes</p>
+                <Button variant="primary" onClick={generateTotpSecret} disabled={loading}>
+                  {loading ? "Setting up…" : "Setup TOTP →"}
+                </Button>
               </div>
 
               {/* SMS */}
-              <div style={styles.methodCard}>
-                <div style={styles.methodIcon}>📲</div>
-                <h4>SMS Text Message</h4>
-                <p>Receive codes via SMS</p>
-                <button
-                  style={{ ...styles.btn, background: "#16a34a" }}
-                  onClick={() => setStep("sms-setup")}
-                  disabled={loading}
-                >
+              <div className="stat-card" style={{ textAlign: "center", padding: "20px" }}>
+                <div style={{ fontSize: "40px", marginBottom: "12px" }}>📲</div>
+                <h4 style={{ margin: "0 0 6px" }}>SMS text message</h4>
+                <p style={{ margin: "0 0 16px", color: "var(--muted)", fontSize: "13px" }}>Receive codes via SMS</p>
+                <Button variant="secondary" style={{ background: "var(--success)", color: "#fff" }} onClick={() => setStep("sms-setup")} disabled={loading}>
                   Setup SMS →
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -174,18 +153,18 @@ function TwoFactorSetup() {
 
         {/* ===== STEP 2: TOTP SETUP ===== */}
         {step === "totp-verify" && qrCode && (
-          <div style={styles.section}>
-            <h3>Scan QR Code</h3>
-            <p style={styles.sectionDesc}>
+          <div style={{ marginBottom: "24px" }}>
+            <h3>Scan QR code</h3>
+            <p className="welcome-text" style={{ marginBottom: "16px" }}>
               Scan this QR code with Google Authenticator or Authy
             </p>
 
-            <div style={styles.qrContainer}>
-              <img src={qrCode} alt="TOTP QR Code" style={styles.qrImage} />
+            <div style={{ textAlign: "center", padding: "20px", background: "var(--surface-sunken)", borderRadius: "var(--r-lg)" }}>
+              <img src={qrCode} alt="TOTP QR Code" style={{ width: "280px", height: "280px", border: "1px solid var(--line)", borderRadius: "var(--r-md)" }} />
             </div>
 
-            <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "12px" }}>
-              📝 Manual entry key: <code>{totpSecret}</code>
+            <p style={{ fontSize: "12px", color: "var(--muted)", marginTop: "12px" }}>
+              📝 Manual entry key: <code style={{ fontFamily: "var(--font-mono)" }}>{totpSecret}</code>
             </p>
 
             <h4 style={{ marginTop: "20px" }}>Enter the 6-digit code:</h4>
@@ -195,219 +174,97 @@ function TwoFactorSetup() {
               value={totpCode}
               onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
               maxLength="6"
-              style={styles.codeInput}
+              className="code-input"
+              style={{ borderColor: "var(--primary)", borderWidth: "2px" }}
             />
 
-            <button
-              style={{ ...styles.btn, background: "#2563eb", marginTop: "12px" }}
-              onClick={verifyAndEnableTotp}
-              disabled={loading || totpCode.length !== 6}
-            >
-              {loading ? "Verifying..." : "✅ Verify & Enable"}
-            </button>
+            <div style={{ marginTop: "12px" }}>
+              <Button variant="primary" onClick={verifyAndEnableTotp} disabled={loading || totpCode.length !== 6}>
+                {loading ? "Verifying…" : "✅ Verify & enable"}
+              </Button>
+            </div>
           </div>
         )}
 
         {/* ===== STEP 3: BACKUP CODES ===== */}
         {step === "backup-codes" && (
-          <div style={styles.section}>
-            <h3>🔑 Save Your Backup Codes</h3>
-            <p style={styles.sectionDesc}>
+          <div style={{ marginBottom: "24px" }}>
+            <h3>🔑 Save your backup codes</h3>
+            <p className="welcome-text" style={{ marginBottom: "16px" }}>
               Save these codes in a safe place. Use them if you lose access to your authenticator app.
             </p>
 
-            <div style={styles.codesBox}>
+            <div style={{ background: "var(--surface-sunken)", border: "1px solid var(--line)", borderRadius: "var(--r-md)", padding: "16px", marginBottom: "16px", maxHeight: "300px", overflowY: "auto" }}>
               {backupCodes.map((code, i) => (
-                <div key={i} style={styles.codeLine}>
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--line)", fontSize: "13px", fontFamily: "var(--font-mono)" }}>
                   <span>{i + 1}.</span>
                   <code>{code}</code>
                 </div>
               ))}
             </div>
 
-            <button
-              style={{ ...styles.btn, background: "#16a34a" }}
-              onClick={() => {
-                const text = backupCodes.join("\n");
-                navigator.clipboard.writeText(text);
-                setMessage("✅ Codes copied to clipboard");
-                setMessageType("success");
-              }}
-            >
-              📋 Copy All Codes
-            </button>
+            <div className="inline-actions">
+              <Button
+                variant="secondary"
+                style={{ background: "var(--success)", color: "#fff" }}
+                onClick={() => {
+                  const text = backupCodes.join("\n");
+                  navigator.clipboard.writeText(text);
+                  setMessage("✅ Codes copied to clipboard");
+                  setMessageType("success");
+                }}
+              >
+                📋 Copy all codes
+              </Button>
 
-            <button
-              style={{ ...styles.btn, background: "#2563eb", marginLeft: "8px" }}
-              onClick={() => {
-                const element = document.createElement("a");
-                element.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(backupCodes.join("\n")));
-                element.setAttribute("download", "backup-codes.txt");
-                element.style.display = "none";
-                document.body.appendChild(element);
-                element.click();
-                document.body.removeChild(element);
-              }}
-            >
-              ⬇️ Download Codes
-            </button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  const element = document.createElement("a");
+                  element.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(backupCodes.join("\n")));
+                  element.setAttribute("download", "backup-codes.txt");
+                  element.style.display = "none";
+                  document.body.appendChild(element);
+                  element.click();
+                  document.body.removeChild(element);
+                }}
+              >
+                ⬇️ Download codes
+              </Button>
+            </div>
 
-            <button
-              style={{ ...styles.btn, background: "#059669", marginTop: "20px" }}
-              onClick={() => navigate("/profile")}
-            >
-              ✅ Done - Back to Profile
-            </button>
+            <div style={{ marginTop: "20px" }}>
+              <Button variant="secondary" style={{ background: "#059669", color: "#fff" }} onClick={() => navigate("/profile")}>
+                ✅ Done — back to profile
+              </Button>
+            </div>
           </div>
         )}
 
         {/* ===== STEP 4: SMS SETUP ===== */}
         {step === "sms-setup" && (
-          <div style={styles.section}>
-            <h3>📲 Setup SMS Verification</h3>
-            <p style={styles.sectionDesc}>Enter your phone number to receive verification codes via SMS</p>
+          <div style={{ marginBottom: "24px" }}>
+            <h3>📲 Setup SMS verification</h3>
+            <p className="welcome-text" style={{ marginBottom: "16px" }}>Enter your phone number to receive verification codes via SMS</p>
 
             <input
               type="tel"
               placeholder="Enter phone number (e.g., +91-9999999999)"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
-              style={styles.input}
             />
 
-            <button
-              style={{ ...styles.btn, background: "#16a34a" }}
-              onClick={setupSms}
-              disabled={loading}
-            >
-              {loading ? "Sending..." : "📤 Send Verification Code"}
-            </button>
-
-            <button
-              style={{ ...styles.btn, background: "#6b7280", marginTop: "12px" }}
-              onClick={() => setStep("method")}
-            >
-              ← Back
-            </button>
+            <div className="inline-actions" style={{ marginTop: "4px" }}>
+              <Button variant="secondary" style={{ background: "var(--success)", color: "#fff" }} onClick={setupSms} disabled={loading}>
+                {loading ? "Sending…" : "📤 Send verification code"}
+              </Button>
+              <Button variant="secondary" onClick={() => setStep("method")}>← Back</Button>
+            </div>
           </div>
         )}
       </div>
     </div>
   );
 }
-
-/* ===== STYLES ===== */
-const styles = {
-  container: {
-    maxWidth: "700px",
-    margin: "auto",
-    padding: "30px",
-  },
-  card: {
-    border: "1px solid #e5e7eb",
-    borderRadius: "12px",
-    padding: "24px",
-    background: "#ffffff",
-    boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: "24px",
-    flexWrap: "wrap",
-    gap: "12px",
-  },
-  subText: {
-    color: "#6b7280",
-    margin: "4px 0 0",
-    fontSize: "14px",
-  },
-  btn: {
-    padding: "10px 16px",
-    cursor: "pointer",
-    border: "none",
-    borderRadius: "6px",
-    color: "white",
-    background: "#374151",
-    fontSize: "14px",
-    fontWeight: "600",
-  },
-  messageBox: {
-    padding: "12px 16px",
-    borderRadius: "8px",
-    border: "1px solid",
-    marginBottom: "20px",
-    fontSize: "14px",
-  },
-  section: {
-    marginBottom: "24px",
-  },
-  sectionDesc: {
-    color: "#6b7280",
-    fontSize: "13px",
-    margin: "4px 0 16px",
-  },
-  methodGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: "16px",
-  },
-  methodCard: {
-    border: "1px solid #e5e7eb",
-    borderRadius: "8px",
-    padding: "20px",
-    textAlign: "center",
-  },
-  methodIcon: {
-    fontSize: "40px",
-    marginBottom: "12px",
-  },
-  qrContainer: {
-    textAlign: "center",
-    padding: "20px",
-    background: "#f9fafb",
-    borderRadius: "8px",
-  },
-  qrImage: {
-    width: "280px",
-    height: "280px",
-    border: "1px solid #e5e7eb",
-  },
-  codeInput: {
-    width: "100%",
-    padding: "12px",
-    fontSize: "24px",
-    textAlign: "center",
-    border: "2px solid #2563eb",
-    borderRadius: "8px",
-    letterSpacing: "8px",
-  },
-  codesBox: {
-    background: "#f9fafb",
-    border: "1px solid #e5e7eb",
-    borderRadius: "8px",
-    padding: "16px",
-    marginBottom: "16px",
-    maxHeight: "300px",
-    overflowY: "auto",
-  },
-  codeLine: {
-    display: "flex",
-    justifyContent: "space-between",
-    padding: "8px 0",
-    borderBottom: "1px solid #e5e7eb",
-    fontSize: "13px",
-    fontFamily: "monospace",
-  },
-  input: {
-    width: "100%",
-    padding: "12px",
-    marginBottom: "16px",
-    border: "1px solid #d1d5db",
-    borderRadius: "6px",
-    fontSize: "14px",
-  },
-};
 
 export default TwoFactorSetup;

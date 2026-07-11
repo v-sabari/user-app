@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiRequest, logoutUser } from "./apiClient";
+import { Button } from "./ui";
 
 function MyActivity() {
   const navigate = useNavigate();
@@ -121,7 +122,7 @@ function MyActivity() {
         {/* ===== HEADER ===== */}
         <div className="top-bar">
           <div>
-            <h2>My Activity</h2>
+            <h2>My activity</h2>
             <p className="welcome-text">
               Your complete personal activity history —{" "}
               <strong>{totalElements}</strong> {filtersActive ? "filtered" : "total"}{" "}
@@ -130,44 +131,26 @@ function MyActivity() {
           </div>
 
           <div className="inline-actions">
-            <button type="button" onClick={() => navigate("/dashboard")}>
-              Dashboard
-            </button>
-            <button type="button" onClick={() => navigate("/profile")}>
-              My Profile
-            </button>
-            <button type="button" className="logout-btn" onClick={handleLogout}>
-              Logout
-            </button>
+            <Button variant="secondary" onClick={() => navigate("/dashboard")}>Dashboard</Button>
+            <Button variant="secondary" onClick={() => navigate("/profile")}>My profile</Button>
+            <Button variant="secondary" onClick={handleLogout}>Logout</Button>
           </div>
         </div>
 
         {/* ===== DAY 65 — FILTER BAR ===== */}
         <form onSubmit={handleApplyFilters}>
-          <div
-            style={{
-              display: "flex",
-              gap: "10px",
-              alignItems: "flex-end",
-              flexWrap: "wrap",
-              marginBottom: "20px",
-              padding: "16px",
-              background: "#f9fafb",
-              borderRadius: "12px",
-              border: "1px solid #e5e7eb",
-            }}
-          >
+          <div className="dashboard-toolbar" style={{ marginBottom: "20px" }}>
             {/* Action filter */}
             <div style={{ flex: 1, minWidth: "160px" }}>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#374151", marginBottom: "5px" }}>
-                Action Type
+              <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "var(--ink-soft)", marginBottom: "5px" }}>
+                Action type
               </label>
               <select
                 value={actionFilter}
                 onChange={(e) => setActionFilter(e.target.value)}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "14px", background: "#fff", cursor: "pointer", marginTop: 0 }}
+                style={{ width: "100%", marginTop: 0 }}
               >
-                <option value="">All Actions</option>
+                <option value="">All actions</option>
                 <option value="LOGIN">LOGIN</option>
                 <option value="LOGOUT">LOGOUT</option>
                 <option value="REGISTER">REGISTER</option>
@@ -182,15 +165,15 @@ function MyActivity() {
 
             {/* Status filter */}
             <div style={{ flex: 1, minWidth: "140px" }}>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#374151", marginBottom: "5px" }}>
+              <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "var(--ink-soft)", marginBottom: "5px" }}>
                 Status
               </label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "14px", background: "#fff", cursor: "pointer", marginTop: 0 }}
+                style={{ width: "100%", marginTop: 0 }}
               >
-                <option value="">All Statuses</option>
+                <option value="">All statuses</option>
                 <option value="SUCCESS">SUCCESS</option>
                 <option value="FAILED">FAILED</option>
                 <option value="WARNING">WARNING</option>
@@ -200,21 +183,9 @@ function MyActivity() {
 
             {/* Buttons */}
             <div style={{ display: "flex", gap: "8px", alignItems: "center", paddingBottom: "1px" }}>
-              <button
-                type="submit"
-                style={{ width: "auto", minWidth: "120px", marginTop: 0, background: "#2563eb" }}
-              >
-                Apply Filters
-              </button>
-
+              <Button type="submit" variant="primary">Apply filters</Button>
               {filtersActive && (
-                <button
-                  type="button"
-                  onClick={handleClearFilters}
-                  style={{ width: "auto", minWidth: "100px", marginTop: 0, background: "#6b7280" }}
-                >
-                  Clear
-                </button>
+                <Button type="button" variant="secondary" onClick={handleClearFilters}>Clear</Button>
               )}
             </div>
           </div>
@@ -224,12 +195,12 @@ function MyActivity() {
         {filtersActive && (
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
             {appliedAction && (
-              <span style={{ fontSize: "12px", background: "#dbeafe", color: "#1d4ed8", padding: "3px 10px", borderRadius: "999px", fontWeight: "600" }}>
+              <span style={{ fontSize: "12px", background: "var(--primary-soft)", color: "var(--primary)", padding: "3px 10px", borderRadius: "999px", fontWeight: "600" }}>
                 Action: {appliedAction}
               </span>
             )}
             {appliedStatus && (
-              <span style={{ fontSize: "12px", background: "#dcfce7", color: "#15803d", padding: "3px 10px", borderRadius: "999px", fontWeight: "600" }}>
+              <span style={{ fontSize: "12px", background: "var(--success-soft)", color: "var(--success-dark)", padding: "3px 10px", borderRadius: "999px", fontWeight: "600" }}>
                 Status: {appliedStatus}
               </span>
             )}
@@ -243,7 +214,7 @@ function MyActivity() {
         {loading ? (
           <p>Loading your activity...</p>
         ) : activities.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "30px 0", color: "#9ca3af" }}>
+          <div style={{ textAlign: "center", padding: "30px 0", color: "var(--faint)" }}>
             <p style={{ fontSize: "16px", margin: "0 0 6px" }}>No activity found.</p>
             {filtersActive && (
               <p style={{ fontSize: "13px", margin: 0 }}>
@@ -258,17 +229,13 @@ function MyActivity() {
               {activities.map((item) => (
                 <div
                   key={item.id}
+                  className="user-card"
                   style={{
-                    background: "#ffffff",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "14px",
-                    padding: "16px 18px",
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "flex-start",
                     gap: "12px",
                     flexWrap: "wrap",
-                    boxShadow: "0 2px 8px rgba(15,23,42,0.04)",
                   }}
                 >
                   {/* ===== LEFT: Action + Status + Details ===== */}
@@ -277,7 +244,7 @@ function MyActivity() {
 
                       {/* Action badge */}
                       <span style={{
-                        fontFamily: "monospace",
+                        fontFamily: "var(--font-mono)",
                         background: getActionColor(item.action) + "18",
                         color: getActionColor(item.action),
                         padding: "3px 12px",
@@ -297,7 +264,7 @@ function MyActivity() {
 
                     {/* Details */}
                     {item.details && (
-                      <p style={{ margin: "0", color: "#6b7280", fontSize: "13px", lineHeight: "1.5" }}>
+                      <p style={{ margin: "0", color: "var(--muted)", fontSize: "13px", lineHeight: "1.5" }}>
                         {item.details}
                       </p>
                     )}
@@ -305,7 +272,7 @@ function MyActivity() {
 
                   {/* ===== RIGHT: Timestamp ===== */}
                   <div style={{ textAlign: "right", flexShrink: 0 }}>
-                    <p style={{ margin: "0", color: "#9ca3af", fontSize: "12px", fontWeight: "500" }}>
+                    <p style={{ margin: "0", color: "var(--faint)", fontSize: "12px", fontWeight: "500" }}>
                       {formatDateTime(item.createdAt)}
                     </p>
                   </div>
@@ -315,13 +282,9 @@ function MyActivity() {
 
             {/* ===== PAGINATION ===== */}
             <div className="pagination">
-              <button type="button" onClick={() => setPage(page - 1)} disabled={page === 0}>
-                Prev
-              </button>
+              <Button variant="secondary" onClick={() => setPage(page - 1)} disabled={page === 0}>Prev</Button>
               <span>Page {totalPages === 0 ? 0 : page + 1} of {totalPages}</span>
-              <button type="button" onClick={() => setPage(page + 1)} disabled={page >= totalPages - 1 || totalPages === 0}>
-                Next
-              </button>
+              <Button variant="secondary" onClick={() => setPage(page + 1)} disabled={page >= totalPages - 1 || totalPages === 0}>Next</Button>
             </div>
           </>
         )}

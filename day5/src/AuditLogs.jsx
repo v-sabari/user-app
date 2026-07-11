@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiRequest, logoutUser } from "./apiClient";
+import { Button } from "./ui";
 
 function AuditLogs() {
   const navigate = useNavigate();
@@ -181,12 +182,12 @@ function AuditLogs() {
         {/* ===== HEADER ===== */}
         <div className="top-bar">
           <div>
-            <h2>Audit Logs</h2>
-            <p className="welcome-text">Advanced Admin Activity History</p>
+            <h2>Audit logs</h2>
+            <p className="welcome-text">Advanced admin activity history</p>
           </div>
           <div className="inline-actions">
-            <button type="button" onClick={() => navigate("/dashboard")}>Dashboard</button>
-            <button type="button" className="logout-btn" onClick={handleLogout}>Logout</button>
+            <Button variant="secondary" onClick={() => navigate("/dashboard")}>Dashboard</Button>
+            <Button variant="secondary" onClick={handleLogout}>Logout</Button>
           </div>
         </div>
 
@@ -201,19 +202,19 @@ function AuditLogs() {
           <input type="date" name="fromDate" value={filters.fromDate} onChange={handleFilterChange} />
           <input type="date" name="toDate" value={filters.toDate} onChange={handleFilterChange} />
           <div className="inline-actions">
-            <button type="submit">Apply Filters</button>
-            <button type="button" onClick={handleClearFilters}>Clear Filters</button>
+            <Button type="submit" variant="primary">Apply filters</Button>
+            <Button type="button" variant="secondary" onClick={handleClearFilters}>Clear filters</Button>
           </div>
         </form>
 
         {/* ===== SORT TOOLBAR ===== */}
         <div className="dashboard-toolbar">
           <select value={sortBy} onChange={(e) => { setSortBy(e.target.value); setPage(0); }}>
-            <option value="createdAt">Sort by Time</option>
-            <option value="action">Sort by Action</option>
-            <option value="status">Sort by Status</option>
-            <option value="actorEmail">Sort by Actor Email</option>
-            <option value="targetEmail">Sort by Target Email</option>
+            <option value="createdAt">Sort by time</option>
+            <option value="action">Sort by action</option>
+            <option value="status">Sort by status</option>
+            <option value="actorEmail">Sort by actor email</option>
+            <option value="targetEmail">Sort by target email</option>
           </select>
           <select value={direction} onChange={(e) => { setDirection(e.target.value); setPage(0); }}>
             <option value="desc">Descending</option>
@@ -224,24 +225,20 @@ function AuditLogs() {
         {/* ===== HEADER ROW: count + export ===== */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "16px 0 12px", flexWrap: "wrap", gap: "10px" }}>
           <h3 style={{ margin: 0 }}>
-            Audit Log List
-            <span style={{ marginLeft: "10px", fontSize: "14px", color: "#6b7280", fontWeight: "400" }}>
+            Audit log list
+            <span style={{ marginLeft: "10px", fontSize: "14px", color: "var(--muted)", fontWeight: "400" }}>
               ({totalElements} {filtersActive ? "filtered" : "total"})
             </span>
           </h3>
-          <button type="button" onClick={handleExportCsv} disabled={exporting || totalElements === 0}
-            style={{
-              width: "auto", minWidth: "160px", marginTop: 0,
-              background: exporting ? "#9ca3af" : totalElements === 0 ? "#d1d5db" : "#16a34a",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
-            }}>
-            {exporting ? "Exporting..." : "⬇ Export CSV"}
-          </button>
+          <Button type="button" variant="secondary" style={{ background: exporting ? "var(--faint)" : totalElements === 0 ? "var(--line-strong)" : "var(--success)", color: "#fff" }}
+            onClick={handleExportCsv} disabled={exporting || totalElements === 0}>
+            {exporting ? "Exporting…" : "⬇ Export CSV"}
+          </Button>
         </div>
 
         {/* ===== ✅ Day 71 — STYLED LOG ENTRIES ===== */}
         {logs.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "30px 0", color: "#9ca3af" }}>
+          <div style={{ textAlign: "center", padding: "30px 0", color: "var(--faint)" }}>
             <p style={{ fontSize: "16px", margin: "0 0 6px" }}>No audit logs found.</p>
             {filtersActive && <p style={{ fontSize: "13px", margin: 0 }}>Try clearing your filters.</p>}
           </div>
@@ -253,12 +250,12 @@ function AuditLogs() {
 
               return (
                 <div key={log.id} style={{
-                  background: "#ffffff",
-                  border: "1px solid #e5e7eb",
+                  background: "var(--surface)",
+                  border: "1px solid var(--line)",
                   borderLeft: `4px solid ${actionColor}`,
                   borderRadius: "12px",
                   padding: "14px 16px",
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+                  boxShadow: "var(--shadow-xs)",
                 }}>
                   {/* ===== TOP ROW: Action badge + Status badge + Timestamp ===== */}
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", flexWrap: "wrap", justifyContent: "space-between" }}>
@@ -266,7 +263,7 @@ function AuditLogs() {
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                       {/* Action badge */}
                       <span style={{
-                        fontFamily: "monospace",
+                        fontFamily: "var(--font-mono)",
                         background: actionColor + "18",
                         color: actionColor,
                         padding: "3px 10px",
@@ -293,20 +290,20 @@ function AuditLogs() {
                     </div>
 
                     {/* Timestamp */}
-                    <span style={{ fontSize: "11px", color: "#9ca3af", fontWeight: "500", whiteSpace: "nowrap" }}>
+                    <span style={{ fontSize: "11px", color: "var(--faint)", fontWeight: "500", whiteSpace: "nowrap" }}>
                       {formatDateTime(log.createdAt)}
                     </span>
                   </div>
 
                   {/* ===== MIDDLE ROW: Actor → Target ===== */}
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", flexWrap: "wrap" }}>
-                    <span style={{ fontSize: "13px", color: "#374151", fontWeight: "600" }}>
+                    <span style={{ fontSize: "13px", color: "var(--ink-soft)", fontWeight: "600" }}>
                       {log.actorEmail || "—"}
                     </span>
 
                     {/* Role badge */}
                     {log.actorRole && (
-                      <span style={{ fontSize: "11px", background: log.actorRole === "ADMIN" ? "#f5f3ff" : "#f9fafb", color: log.actorRole === "ADMIN" ? "#7c3aed" : "#374151", padding: "1px 8px", borderRadius: "999px", border: "1px solid " + (log.actorRole === "ADMIN" ? "#ddd6fe" : "#e5e7eb"), fontWeight: "600" }}>
+                      <span style={{ fontSize: "11px", background: log.actorRole === "ADMIN" ? "#f5f3ff" : "var(--surface-sunken)", color: log.actorRole === "ADMIN" ? "#7c3aed" : "var(--ink-soft)", padding: "1px 8px", borderRadius: "999px", border: "1px solid " + (log.actorRole === "ADMIN" ? "#ddd6fe" : "var(--line)"), fontWeight: "600" }}>
                         {log.actorRole}
                       </span>
                     )}
@@ -314,15 +311,15 @@ function AuditLogs() {
                     {/* Arrow */}
                     {log.targetEmail && log.targetEmail !== log.actorEmail && (
                       <>
-                        <span style={{ color: "#d1d5db", fontSize: "13px" }}>→</span>
-                        <span style={{ fontSize: "13px", color: "#6b7280" }}>{log.targetEmail}</span>
+                        <span style={{ color: "var(--line-strong)", fontSize: "13px" }}>→</span>
+                        <span style={{ fontSize: "13px", color: "var(--muted)" }}>{log.targetEmail}</span>
                       </>
                     )}
                   </div>
 
                   {/* ===== DETAILS ===== */}
                   {log.details && (
-                    <p style={{ margin: 0, fontSize: "12px", color: "#6b7280", lineHeight: "1.5", borderTop: "1px solid #f3f4f6", paddingTop: "6px" }}>
+                    <p style={{ margin: 0, fontSize: "12px", color: "var(--muted)", lineHeight: "1.5", borderTop: "1px solid var(--surface-sunken)", paddingTop: "6px" }}>
                       {log.details}
                     </p>
                   )}
@@ -334,9 +331,9 @@ function AuditLogs() {
 
         {/* ===== PAGINATION ===== */}
         <div className="pagination">
-          <button type="button" onClick={() => setPage(page - 1)} disabled={page === 0}>Prev</button>
+          <Button variant="secondary" onClick={() => setPage(page - 1)} disabled={page === 0}>Prev</Button>
           <span>Page {totalPages === 0 ? 0 : page + 1} of {totalPages}</span>
-          <button type="button" onClick={() => setPage(page + 1)} disabled={page >= totalPages - 1 || totalPages === 0}>Next</button>
+          <Button variant="secondary" onClick={() => setPage(page + 1)} disabled={page >= totalPages - 1 || totalPages === 0}>Next</Button>
         </div>
 
       </div>

@@ -36,9 +36,9 @@ function AlertNotification({ alert, onDismiss, onRead }) {
 
   const severityStyles = {
     CRITICAL: {
-      background: "#fee2e2",
+      background: "var(--danger-soft)",
       border: "1px solid #fca5a5",
-      color: "#dc2626",
+      color: "var(--danger)",
       icon: "🔴",
     },
     HIGH: {
@@ -48,9 +48,9 @@ function AlertNotification({ alert, onDismiss, onRead }) {
       icon: "⚠️",
     },
     MEDIUM: {
-      background: "#fef3c7",
+      background: "var(--warning-soft)",
       border: "1px solid #fde68a",
-      color: "#d97706",
+      color: "var(--warning)",
       icon: "⏰",
     },
   };
@@ -62,7 +62,7 @@ function AlertNotification({ alert, onDismiss, onRead }) {
       style={{
         background: style.background,
         border: style.border,
-        borderRadius: "8px",
+        borderRadius: "var(--r-md)",
         padding: "12px 16px",
         marginBottom: "10px",
         display: "flex",
@@ -87,7 +87,7 @@ function AlertNotification({ alert, onDismiss, onRead }) {
           <p
             style={{
               margin: "0 0 8px",
-              color: "#374151",
+              color: "var(--ink-soft)",
               fontSize: "13px",
               lineHeight: "1.5",
             }}
@@ -102,7 +102,7 @@ function AlertNotification({ alert, onDismiss, onRead }) {
                 border: `1px solid ${style.color}`,
                 color: style.color,
                 padding: "4px 10px",
-                borderRadius: "4px",
+                borderRadius: "var(--r-sm)",
                 fontSize: "12px",
                 cursor: "pointer",
                 fontWeight: "600",
@@ -114,10 +114,10 @@ function AlertNotification({ alert, onDismiss, onRead }) {
               onClick={handleDismiss}
               style={{
                 background: "transparent",
-                border: "1px solid #d1d5db",
-                color: "#6b7280",
+                border: "1px solid var(--line-strong)",
+                color: "var(--muted)",
                 padding: "4px 10px",
-                borderRadius: "4px",
+                borderRadius: "var(--r-sm)",
                 fontSize: "12px",
                 cursor: "pointer",
                 fontWeight: "600",
@@ -133,7 +133,7 @@ function AlertNotification({ alert, onDismiss, onRead }) {
         style={{
           background: "transparent",
           border: "none",
-          color: "#9ca3af",
+          color: "var(--faint)",
           fontSize: "18px",
           cursor: "pointer",
           padding: "0",

@@ -118,7 +118,7 @@
 }
 
 .auth-mark {
-  display: flex;
+  
   align-items: center;
   gap: var(--sp-2);
   justify-content: center;
@@ -130,7 +130,7 @@
   height: 34px;
   border-radius: var(--r-sm);
   background: linear-gradient(135deg, var(--primary), #7c6cf0);
-  display: flex;
+  
   align-items: center;
   justify-content: center;
   color: #fff;
@@ -138,6 +138,8 @@
   font-size: 15px;
   box-shadow: var(--shadow-sm);
 }
+.auth-mark-badge { display: inline-block; }
+
 
 .auth-mark-name {
   font-family: var(--font-ui);

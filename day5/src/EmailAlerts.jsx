@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiRequest, logoutUser } from "./apiClient";
+import { Button, Banner } from "./ui";
 
 /**
  * ✅ Day 80 — Email Alerts Component
@@ -121,74 +122,56 @@ function EmailAlerts() {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
+    <div className="container">
+      <div className="card">
         {/* ===== HEADER ===== */}
-        <div style={styles.header}>
+        <div className="top-bar">
           <div>
-            <h2>📧 Email Alert Notifications</h2>
-            <p style={styles.subText}>Test sending security alert emails</p>
+            <h2>📧 Email alert notifications</h2>
+            <p className="welcome-text">Test sending security alert emails</p>
           </div>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-            <button
-              style={{ ...styles.btn, background: "#2563eb" }}
-              onClick={() => navigate("/dashboard")}
-            >
-              Dashboard
-            </button>
-            <button style={styles.btn} onClick={handleLogout}>
-              Logout
-            </button>
+          <div className="inline-actions">
+            <Button variant="secondary" onClick={() => navigate("/dashboard")}>Dashboard</Button>
+            <Button variant="secondary" onClick={handleLogout}>Logout</Button>
           </div>
         </div>
 
         {/* ===== MESSAGE ===== */}
         {message && (
-          <div
-            style={{
-              ...styles.messageBox,
-              background: messageType === "success" ? "#dcfce7" : "#fee2e2",
-              borderColor: messageType === "success" ? "#86efac" : "#fca5a5",
-              color: messageType === "success" ? "#15803d" : "#991b1b",
-            }}
-          >
+          <Banner tone={messageType === "success" ? "success" : "danger"} style={{ marginBottom: "20px" }}>
             {message}
-          </div>
+          </Banner>
         )}
 
         {/* ===== TEST EMAIL ===== */}
-        <div style={styles.section}>
-          <h3>🧪 Test Email</h3>
-          <p style={styles.sectionDesc}>Send a test email to verify notifications are working</p>
-          <button
-            style={{ ...styles.btn, background: "#0891b2" }}
-            onClick={sendTestEmail}
-            disabled={loading}
-          >
-            {loading ? "Sending..." : "📧 Send Test Email"}
-          </button>
+        <div className="dashboard-section">
+          <h3>🧪 Test email</h3>
+          <p className="welcome-text" style={{ marginBottom: "12px" }}>Send a test email to verify notifications are working</p>
+          <Button variant="secondary" style={{ background: "var(--info)", color: "#fff" }} onClick={sendTestEmail} disabled={loading}>
+            {loading ? "Sending…" : "📧 Send test email"}
+          </Button>
         </div>
 
         {/* ===== HIGH RISK ALERT ===== */}
-        <div style={styles.section}>
-          <h3>⚠️ High Risk Score Alert</h3>
-          <p style={styles.sectionDesc}>Email when account risk score increases</p>
-          <div style={styles.inputGroup}>
-            <div style={styles.inputField}>
-              <label>Risk Score (0-100):</label>
+        <div className="dashboard-section">
+          <h3>⚠️ High risk score alert</h3>
+          <p className="welcome-text" style={{ marginBottom: "12px" }}>Email when account risk score increases</p>
+          <div style={{ display: "flex", gap: "12px", marginBottom: "12px", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <label style={{ fontSize: "13px", fontWeight: "600", color: "var(--ink-soft)" }}>Risk score (0–100):</label>
               <input
                 type="range"
                 min="0"
                 max="100"
                 value={riskScore}
                 onChange={(e) => setRiskScore(e.target.value)}
-                style={styles.slider}
+                style={{ width: "200px", cursor: "pointer" }}
               />
-              <span style={{ fontSize: "12px", color: "#6b7280" }}>{riskScore}</span>
+              <span style={{ fontSize: "12px", color: "var(--muted)" }}>{riskScore}</span>
             </div>
-            <div style={styles.inputField}>
-              <label>Risk Level:</label>
-              <select value={riskLevel} onChange={(e) => setRiskLevel(e.target.value)} style={styles.select}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <label style={{ fontSize: "13px", fontWeight: "600", color: "var(--ink-soft)" }}>Risk level:</label>
+              <select value={riskLevel} onChange={(e) => setRiskLevel(e.target.value)} style={{ width: "auto", marginTop: 0 }}>
                 <option value="SECURE">SECURE</option>
                 <option value="CAUTION">CAUTION</option>
                 <option value="AT_RISK">AT_RISK</option>
@@ -196,176 +179,77 @@ function EmailAlerts() {
               </select>
             </div>
           </div>
-          <button
-            style={{ ...styles.btn, background: "#dc2626" }}
-            onClick={sendHighRiskAlert}
-            disabled={loading}
-          >
-            {loading ? "Sending..." : "🚨 Send High Risk Alert"}
-          </button>
+          <Button variant="danger" onClick={sendHighRiskAlert} disabled={loading}>
+            {loading ? "Sending…" : "🚨 Send high risk alert"}
+          </Button>
         </div>
 
         {/* ===== SUSPICIOUS LOGIN ALERT ===== */}
-        <div style={styles.section}>
-          <h3>🚨 Suspicious Login Alert</h3>
-          <p style={styles.sectionDesc}>Email on new device or location login</p>
-          <button
-            style={{ ...styles.btn, background: "#ea580c" }}
-            onClick={sendSuspiciousLoginAlert}
-            disabled={loading}
-          >
-            {loading ? "Sending..." : "🚨 Send Suspicious Login Alert"}
-          </button>
+        <div className="dashboard-section">
+          <h3>🚨 Suspicious login alert</h3>
+          <p className="welcome-text" style={{ marginBottom: "12px" }}>Email on new device or location login</p>
+          <Button variant="secondary" style={{ background: "#ea580c", color: "#fff" }} onClick={sendSuspiciousLoginAlert} disabled={loading}>
+            {loading ? "Sending…" : "🚨 Send suspicious login alert"}
+          </Button>
         </div>
 
         {/* ===== PASSWORD EXPIRING ALERT ===== */}
-        <div style={styles.section}>
-          <h3>⏰ Password Expiring Alert</h3>
-          <p style={styles.sectionDesc}>Email when password is getting old</p>
-          <div style={styles.inputGroup}>
-            <div style={styles.inputField}>
-              <label>Days Old:</label>
+        <div className="dashboard-section">
+          <h3>⏰ Password expiring alert</h3>
+          <p className="welcome-text" style={{ marginBottom: "12px" }}>Email when password is getting old</p>
+          <div style={{ display: "flex", gap: "12px", marginBottom: "12px", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <label style={{ fontSize: "13px", fontWeight: "600", color: "var(--ink-soft)" }}>Days old:</label>
               <input
                 type="range"
                 min="0"
                 max="180"
                 value={daysOld}
                 onChange={(e) => setDaysOld(e.target.value)}
-                style={styles.slider}
+                style={{ width: "200px", cursor: "pointer" }}
               />
-              <span style={{ fontSize: "12px", color: "#6b7280" }}>{daysOld} days</span>
+              <span style={{ fontSize: "12px", color: "var(--muted)" }}>{daysOld} days</span>
             </div>
           </div>
-          <button
-            style={{ ...styles.btn, background: "#d97706" }}
-            onClick={sendPasswordExpiringAlert}
-            disabled={loading}
-          >
-            {loading ? "Sending..." : "⏰ Send Password Expiring Alert"}
-          </button>
+          <Button variant="secondary" style={{ background: "var(--warning)", color: "#fff" }} onClick={sendPasswordExpiringAlert} disabled={loading}>
+            {loading ? "Sending…" : "⏰ Send password expiring alert"}
+          </Button>
         </div>
 
         {/* ===== BRUTE FORCE ALERT ===== */}
-        <div style={styles.section}>
-          <h3>🔴 Brute Force Alert</h3>
-          <p style={styles.sectionDesc}>Email on multiple failed login attempts</p>
-          <div style={styles.inputGroup}>
-            <div style={styles.inputField}>
-              <label>Failed Attempts:</label>
+        <div className="dashboard-section">
+          <h3>🔴 Brute force alert</h3>
+          <p className="welcome-text" style={{ marginBottom: "12px" }}>Email on multiple failed login attempts</p>
+          <div style={{ display: "flex", gap: "12px", marginBottom: "12px", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <label style={{ fontSize: "13px", fontWeight: "600", color: "var(--ink-soft)" }}>Failed attempts:</label>
               <input
                 type="range"
                 min="1"
                 max="20"
                 value={failedAttempts}
                 onChange={(e) => setFailedAttempts(e.target.value)}
-                style={styles.slider}
+                style={{ width: "200px", cursor: "pointer" }}
               />
-              <span style={{ fontSize: "12px", color: "#6b7280" }}>{failedAttempts} attempts</span>
+              <span style={{ fontSize: "12px", color: "var(--muted)" }}>{failedAttempts} attempts</span>
             </div>
           </div>
-          <button
-            style={{ ...styles.btn, background: "#991b1b" }}
-            onClick={sendBruteForceAlert}
-            disabled={loading}
-          >
-            {loading ? "Sending..." : "🔴 Send Brute Force Alert"}
-          </button>
+          <Button variant="danger" style={{ background: "#991b1b" }} onClick={sendBruteForceAlert} disabled={loading}>
+            {loading ? "Sending…" : "🔴 Send brute force alert"}
+          </Button>
         </div>
 
         {/* ===== ACCOUNT LOCKED ALERT ===== */}
-        <div style={styles.section}>
-          <h3>🔐 Account Locked Alert</h3>
-          <p style={styles.sectionDesc}>Email when account is locked</p>
-          <button
-            style={{ ...styles.btn, background: "#7c3aed" }}
-            onClick={sendAccountLockedAlert}
-            disabled={loading}
-          >
-            {loading ? "Sending..." : "🔐 Send Account Locked Alert"}
-          </button>
+        <div className="dashboard-section" style={{ marginBottom: 0, borderBottom: "none", paddingBottom: 0 }}>
+          <h3>🔐 Account locked alert</h3>
+          <p className="welcome-text" style={{ marginBottom: "12px" }}>Email when account is locked</p>
+          <Button variant="secondary" style={{ background: "#7c3aed", color: "#fff" }} onClick={sendAccountLockedAlert} disabled={loading}>
+            {loading ? "Sending…" : "🔐 Send account locked alert"}
+          </Button>
         </div>
       </div>
     </div>
   );
 }
-
-/* ===== STYLES ===== */
-const styles = {
-  container: {
-    maxWidth: "900px",
-    margin: "auto",
-    padding: "30px",
-  },
-  card: {
-    border: "1px solid #e5e7eb",
-    borderRadius: "12px",
-    padding: "24px",
-    background: "#ffffff",
-    boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: "24px",
-    flexWrap: "wrap",
-    gap: "12px",
-  },
-  subText: {
-    color: "#6b7280",
-    margin: "4px 0 0",
-    fontSize: "14px",
-  },
-  btn: {
-    padding: "10px 16px",
-    cursor: "pointer",
-    border: "none",
-    borderRadius: "6px",
-    color: "white",
-    background: "#374151",
-    fontSize: "14px",
-    fontWeight: "600",
-  },
-  messageBox: {
-    padding: "12px 16px",
-    borderRadius: "8px",
-    border: "1px solid",
-    marginBottom: "20px",
-    fontSize: "14px",
-    fontWeight: "500",
-  },
-  section: {
-    marginBottom: "24px",
-    paddingBottom: "20px",
-    borderBottom: "1px solid #e5e7eb",
-  },
-  sectionDesc: {
-    color: "#6b7280",
-    fontSize: "13px",
-    margin: "4px 0 12px",
-  },
-  inputGroup: {
-    display: "flex",
-    gap: "12px",
-    marginBottom: "12px",
-    flexWrap: "wrap",
-  },
-  inputField: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "6px",
-  },
-  slider: {
-    width: "200px",
-    cursor: "pointer",
-  },
-  select: {
-    padding: "6px 8px",
-    border: "1px solid #d1d5db",
-    borderRadius: "4px",
-    fontSize: "13px",
-    cursor: "pointer",
-  },
-};
 
 export default EmailAlerts;

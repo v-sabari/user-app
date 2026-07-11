@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiRequest, logoutUser } from "./apiClient";
+import { Button } from "./ui";
 
 function Analytics() {
   const navigate = useNavigate();
@@ -170,13 +171,13 @@ function Analytics() {
         {/* ===== HEADER ===== */}
         <div className="top-bar">
           <div>
-            <h2>Admin Analytics</h2>
+            <h2>Admin analytics</h2>
             <p className="welcome-text">Real-time user, security, and activity insights.</p>
           </div>
           <div className="inline-actions">
-            <button type="button" onClick={() => navigate("/dashboard")}>Dashboard</button>
-            <button type="button" onClick={() => navigate("/audit-logs")}>Audit Logs</button>
-            <button type="button" className="logout-btn" onClick={handleLogout}>Logout</button>
+            <Button variant="secondary" onClick={() => navigate("/dashboard")}>Dashboard</Button>
+            <Button variant="secondary" onClick={() => navigate("/audit-logs")}>Audit logs</Button>
+            <Button variant="secondary" onClick={handleLogout}>Logout</Button>
           </div>
         </div>
 
@@ -188,43 +189,43 @@ function Analytics() {
           <>
             {/* ===== STAT CARDS ===== */}
             <div className="analytics-grid">
-              <div className="analytics-card"><p>Total Users</p><h3>{analytics.totalUsers}</h3></div>
-              <div className="analytics-card"><p>Active Users</p><h3 style={{ color: "#16a34a" }}>{analytics.activeUsers}</h3></div>
-              <div className="analytics-card"><p>Inactive Users</p><h3 style={{ color: "#d97706" }}>{analytics.inactiveUsers}</h3></div>
-              <div className="analytics-card"><p>Locked Users</p><h3 style={{ color: "#dc2626" }}>{analytics.lockedUsers}</h3></div>
-              <div className="analytics-card"><p>Admin Users</p><h3 style={{ color: "#7c3aed" }}>{analytics.adminUsers}</h3></div>
-              <div className="analytics-card"><p>Normal Users</p><h3>{analytics.normalUsers}</h3></div>
-              <div className="analytics-card"><p>Total Audit Logs</p><h3>{analytics.totalAuditLogs}</h3></div>
-              <div className="analytics-card"><p>Successful Actions</p><h3 style={{ color: "#16a34a" }}>{analytics.successfulActions}</h3></div>
-              <div className="analytics-card"><p>Failed Actions</p><h3 style={{ color: "#dc2626" }}>{analytics.failedActions}</h3></div>
+              <div className="analytics-card"><p>Total users</p><h3>{analytics.totalUsers}</h3></div>
+              <div className="analytics-card"><p>Active users</p><h3 style={{ color: "var(--success)" }}>{analytics.activeUsers}</h3></div>
+              <div className="analytics-card"><p>Inactive users</p><h3 style={{ color: "var(--warning)" }}>{analytics.inactiveUsers}</h3></div>
+              <div className="analytics-card"><p>Locked users</p><h3 style={{ color: "var(--danger)" }}>{analytics.lockedUsers}</h3></div>
+              <div className="analytics-card"><p>Admin users</p><h3 style={{ color: "#7c3aed" }}>{analytics.adminUsers}</h3></div>
+              <div className="analytics-card"><p>Normal users</p><h3>{analytics.normalUsers}</h3></div>
+              <div className="analytics-card"><p>Total audit logs</p><h3>{analytics.totalAuditLogs}</h3></div>
+              <div className="analytics-card"><p>Successful actions</p><h3 style={{ color: "var(--success)" }}>{analytics.successfulActions}</h3></div>
+              <div className="analytics-card"><p>Failed actions</p><h3 style={{ color: "var(--danger)" }}>{analytics.failedActions}</h3></div>
             </div>
 
             {/* ===== DAY 74 — INACTIVE ACCOUNTS REPORT ===== */}
-            <div className="dashboard-section" style={{ border: "1px solid #fed7aa", borderRadius: "12px", background: "#fffbeb", padding: "20px", marginBottom: "20px" }}>
-              <h3 style={{ margin: "0 0 6px", color: "#92400e" }}>👻 Inactive Accounts Report</h3>
-              <p style={{ color: "#78350f", fontSize: "13px", marginBottom: "16px", lineHeight: "1.6" }}>
+            <div className="dashboard-section" style={{ border: "1px solid #fed7aa", borderRadius: "12px", background: "var(--warning-soft)", padding: "20px", marginBottom: "20px" }}>
+              <h3 style={{ margin: "0 0 6px", color: "var(--warning-dark)" }}>👻 Inactive accounts report</h3>
+              <p style={{ color: "var(--warning-dark)", fontSize: "13px", marginBottom: "16px", lineHeight: "1.6" }}>
                 Users who have <strong>never successfully logged in</strong> since registration.
               </p>
 
               {inactiveLoading ? (
-                <p style={{ color: "#9ca3af", fontSize: "13px" }}>Loading inactive accounts...</p>
+                <p style={{ color: "var(--faint)", fontSize: "13px" }}>Loading inactive accounts...</p>
               ) : !inactiveData ? (
-                <p style={{ color: "#9ca3af", fontSize: "13px" }}>Could not load inactive accounts.</p>
+                <p style={{ color: "var(--faint)", fontSize: "13px" }}>Could not load inactive accounts.</p>
               ) : (
                 <>
                   {/* ===== Summary stats ===== */}
                   <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginBottom: "16px" }}>
-                    <div style={{ background: "#fff", border: "1px solid #fde68a", borderRadius: "10px", padding: "12px 20px", textAlign: "center", minWidth: "120px" }}>
-                      <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "#92400e", textTransform: "uppercase" }}>Never Logged In</p>
-                      <p style={{ margin: 0, fontSize: "28px", fontWeight: "800", color: "#d97706" }}>{inactiveData.count}</p>
-                      <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#9ca3af" }}>of {inactiveData.totalUsers} total users</p>
+                    <div style={{ background: "var(--surface)", border: "1px solid #fde68a", borderRadius: "10px", padding: "12px 20px", textAlign: "center", minWidth: "120px" }}>
+                      <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "var(--warning-dark)", textTransform: "uppercase" }}>Never logged in</p>
+                      <p style={{ margin: 0, fontSize: "28px", fontWeight: "800", color: "var(--warning)" }}>{inactiveData.count}</p>
+                      <p style={{ margin: "2px 0 0", fontSize: "11px", color: "var(--faint)" }}>of {inactiveData.totalUsers} total users</p>
                     </div>
-                    <div style={{ background: "#fff", border: "1px solid #fde68a", borderRadius: "10px", padding: "12px 20px", textAlign: "center", minWidth: "120px" }}>
-                      <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "#92400e", textTransform: "uppercase" }}>Percentage</p>
-                      <p style={{ margin: 0, fontSize: "28px", fontWeight: "800", color: inactiveData.percentage > 20 ? "#dc2626" : "#d97706" }}>
+                    <div style={{ background: "var(--surface)", border: "1px solid #fde68a", borderRadius: "10px", padding: "12px 20px", textAlign: "center", minWidth: "120px" }}>
+                      <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "var(--warning-dark)", textTransform: "uppercase" }}>Percentage</p>
+                      <p style={{ margin: 0, fontSize: "28px", fontWeight: "800", color: inactiveData.percentage > 20 ? "var(--danger)" : "var(--warning)" }}>
                         {inactiveData.percentage}%
                       </p>
-                      <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#9ca3af" }}>
+                      <p style={{ margin: "2px 0 0", fontSize: "11px", color: "var(--faint)" }}>
                         {inactiveData.percentage > 20 ? "⚠️ high" : "✅ normal"}
                       </p>
                     </div>
@@ -232,16 +233,16 @@ function Analytics() {
 
                   {/* ===== User list ===== */}
                   {inactiveData.users.length === 0 ? (
-                    <div style={{ textAlign: "center", padding: "20px", background: "#f0fdf4", borderRadius: "10px", border: "1px solid #bbf7d0" }}>
-                      <p style={{ margin: 0, color: "#15803d", fontWeight: "600" }}>✅ All registered users have logged in at least once!</p>
+                    <div style={{ textAlign: "center", padding: "20px", background: "var(--success-soft)", borderRadius: "10px", border: "1px solid #bbf7d0" }}>
+                      <p style={{ margin: 0, color: "var(--success-dark)", fontWeight: "600" }}>✅ All registered users have logged in at least once!</p>
                     </div>
                   ) : (
                     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                       {inactiveData.users.map((user) => (
                         <div key={user.id} style={{
-                          background: "#fff",
+                          background: "var(--surface)",
                           border: "1px solid #fde68a",
-                          borderLeft: "4px solid #d97706",
+                          borderLeft: "4px solid var(--warning)",
                           borderRadius: "10px",
                           padding: "12px 16px",
                           display: "flex",
@@ -251,21 +252,17 @@ function Analytics() {
                           gap: "10px",
                         }}>
                           <div>
-                            <p style={{ margin: "0 0 2px", fontWeight: "700", color: "#111827", fontSize: "14px" }}>{user.name}</p>
-                            <p style={{ margin: 0, fontSize: "13px", color: "#6b7280" }}>{user.email}</p>
+                            <p style={{ margin: "0 0 2px", fontWeight: "700", color: "var(--ink)", fontSize: "14px" }}>{user.name}</p>
+                            <p style={{ margin: 0, fontSize: "13px", color: "var(--muted)" }}>{user.email}</p>
                           </div>
                           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                            <span style={{ fontSize: "11px", background: user.role === "ADMIN" ? "#f5f3ff" : "#f9fafb", color: user.role === "ADMIN" ? "#7c3aed" : "#374151", padding: "2px 8px", borderRadius: "999px", border: "1px solid " + (user.role === "ADMIN" ? "#ddd6fe" : "#e5e7eb"), fontWeight: "600" }}>
+                            <span style={{ fontSize: "11px", background: user.role === "ADMIN" ? "#f5f3ff" : "var(--surface-sunken)", color: user.role === "ADMIN" ? "#7c3aed" : "var(--ink-soft)", padding: "2px 8px", borderRadius: "999px", border: "1px solid " + (user.role === "ADMIN" ? "#ddd6fe" : "var(--line)"), fontWeight: "600" }}>
                               {user.role}
                             </span>
                             {statusBadge(user.status)}
-                            <button
-                              type="button"
-                              onClick={() => navigate("/users")}
-                              style={{ width: "auto", minWidth: "100px", marginTop: 0, fontSize: "12px", padding: "5px 10px", background: "#d97706" }}
-                            >
+                            <Button type="button" variant="secondary" style={{ background: "var(--warning)", color: "#fff", fontSize: "12px" }} onClick={() => navigate("/users")}>
                               Manage →
-                            </button>
+                            </Button>
                           </div>
                         </div>
                       ))}
@@ -278,14 +275,14 @@ function Analytics() {
             {/* ===== DAY 67 — 7-DAY TREND CHARTS ===== */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px", marginBottom: "20px" }}>
               <div className="dashboard-section">
-                <h3 style={{ marginBottom: "4px" }}>📈 Daily Logins — Last 7 Days</h3>
-                {trendLoading ? <p style={{ color: "#9ca3af", fontSize: "13px" }}>Loading trend...</p>
-                  : <VerticalBarChart data={loginTrend} color="#2563eb" emptyMsg="No logins recorded this week" />}
+                <h3 style={{ marginBottom: "4px" }}>📈 Daily logins — last 7 days</h3>
+                {trendLoading ? <p style={{ color: "var(--faint)", fontSize: "13px" }}>Loading trend...</p>
+                  : <VerticalBarChart data={loginTrend} color="var(--primary)" emptyMsg="No logins recorded this week" />}
               </div>
               <div className="dashboard-section">
-                <h3 style={{ marginBottom: "4px" }}>👤 Daily Registrations — Last 7 Days</h3>
-                {trendLoading ? <p style={{ color: "#9ca3af", fontSize: "13px" }}>Loading trend...</p>
-                  : <VerticalBarChart data={registerTrend} color="#16a34a" emptyMsg="No registrations recorded this week" />}
+                <h3 style={{ marginBottom: "4px" }}>👤 Daily registrations — last 7 days</h3>
+                {trendLoading ? <p style={{ color: "var(--faint)", fontSize: "13px" }}>Loading trend...</p>
+                  : <VerticalBarChart data={registerTrend} color="var(--success)" emptyMsg="No registrations recorded this week" />}
               </div>
             </div>
 
@@ -293,33 +290,33 @@ function Analytics() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px", marginBottom: "20px" }}>
 
               <div className="dashboard-section">
-                <h3 style={{ marginBottom: "20px" }}>👥 User Status Breakdown</h3>
-                <HBar label="Active" value={analytics.activeUsers} max={analytics.totalUsers} color="#16a34a" />
-                <HBar label="Inactive" value={analytics.inactiveUsers} max={analytics.totalUsers} color="#d97706" />
-                <HBar label="Locked" value={analytics.lockedUsers} max={analytics.totalUsers} color="#dc2626" />
-                <p style={{ margin: "12px 0 0", fontSize: "12px", color: "#9ca3af", textAlign: "right" }}>Total: {analytics.totalUsers} users</p>
+                <h3 style={{ marginBottom: "20px" }}>👥 User status breakdown</h3>
+                <HBar label="Active" value={analytics.activeUsers} max={analytics.totalUsers} color="var(--success)" />
+                <HBar label="Inactive" value={analytics.inactiveUsers} max={analytics.totalUsers} color="var(--warning)" />
+                <HBar label="Locked" value={analytics.lockedUsers} max={analytics.totalUsers} color="var(--danger)" />
+                <p style={{ margin: "12px 0 0", fontSize: "12px", color: "var(--faint)", textAlign: "right" }}>Total: {analytics.totalUsers} users</p>
               </div>
 
               <div className="dashboard-section">
-                <h3 style={{ marginBottom: "20px" }}>🔑 Role Distribution</h3>
-                <HBar label="USER" value={analytics.normalUsers} max={analytics.totalUsers} color="#2563eb" />
+                <h3 style={{ marginBottom: "20px" }}>🔑 Role distribution</h3>
+                <HBar label="USER" value={analytics.normalUsers} max={analytics.totalUsers} color="var(--primary)" />
                 <HBar label="ADMIN" value={analytics.adminUsers} max={analytics.totalUsers} color="#7c3aed" />
                 <div style={{ marginTop: "20px" }}>
-                  <StackedBar leftLabel="USER" leftValue={analytics.normalUsers} rightLabel="ADMIN" rightValue={analytics.adminUsers} leftColor="#2563eb" rightColor="#7c3aed" />
+                  <StackedBar leftLabel="USER" leftValue={analytics.normalUsers} rightLabel="ADMIN" rightValue={analytics.adminUsers} leftColor="var(--primary)" rightColor="#7c3aed" />
                 </div>
               </div>
 
               <div className="dashboard-section">
-                <h3 style={{ marginBottom: "20px" }}>✅ Action Success Rate</h3>
-                <HBar label="Successful" value={analytics.successfulActions} max={analytics.totalAuditLogs} color="#16a34a" />
-                <HBar label="Failed" value={analytics.failedActions} max={analytics.totalAuditLogs} color="#dc2626" />
+                <h3 style={{ marginBottom: "20px" }}>✅ Action success rate</h3>
+                <HBar label="Successful" value={analytics.successfulActions} max={analytics.totalAuditLogs} color="var(--success)" />
+                <HBar label="Failed" value={analytics.failedActions} max={analytics.totalAuditLogs} color="var(--danger)" />
                 {(() => {
                   const total = analytics.successfulActions + analytics.failedActions;
                   const rate = total > 0 ? ((analytics.successfulActions / total) * 100).toFixed(1) : 0;
                   const color = rate >= 80 ? "#16a34a" : rate >= 50 ? "#d97706" : "#dc2626";
                   return (
                     <div style={{ marginTop: "16px", textAlign: "center", background: color + "12", border: `1px solid ${color}30`, borderRadius: "10px", padding: "10px" }}>
-                      <p style={{ margin: 0, fontSize: "13px", color: "#6b7280" }}>Success Rate</p>
+                      <p style={{ margin: 0, fontSize: "13px", color: "var(--muted)" }}>Success rate</p>
                       <p style={{ margin: "4px 0 0", fontSize: "24px", fontWeight: "700", color }}>{rate}%</p>
                     </div>
                   );
@@ -327,21 +324,21 @@ function Analytics() {
               </div>
 
               <div className="dashboard-section">
-                <h3 style={{ marginBottom: "20px" }}>📊 Top Actions Frequency</h3>
+                <h3 style={{ marginBottom: "20px" }}>📊 Top actions frequency</h3>
                 {analytics.actionCounts && analytics.actionCounts.length > 0 ? (
                   (() => {
                     const maxCount = analytics.actionCounts[0]?.count || 1;
                     return analytics.actionCounts.slice(0, 8).map((item) => (
-                      <HBar key={item.action} label={item.action} value={Number(item.count)} max={Number(maxCount)} color="#0891b2" />
+                      <HBar key={item.action} label={item.action} value={Number(item.count)} max={Number(maxCount)} color="var(--info)" />
                     ));
                   })()
-                ) : <p style={{ color: "#9ca3af" }}>No action data</p>}
+                ) : <p style={{ color: "var(--faint)" }}>No action data</p>}
               </div>
             </div>
 
             {/* ===== ACTION SUMMARY TABLE ===== */}
             <div className="dashboard-section">
-              <h3>Action Summary</h3>
+              <h3>Action summary</h3>
               {analytics.actionCounts && analytics.actionCounts.length > 0 ? (
                 <div className="user-list">
                   {analytics.actionCounts.map((item) => (

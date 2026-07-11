@@ -43,7 +43,7 @@ function AlertBell({ onClick }) {
         alignItems: "center",
         justifyContent: "center",
       }}
-      onMouseEnter={(e) => (e.target.style.background = "#e5e7eb")}
+      onMouseEnter={(e) => (e.target.style.background = "var(--surface-sunken)")}
       onMouseLeave={(e) => (e.target.style.background = "transparent")}
       title="View security alerts"
     >
@@ -54,7 +54,7 @@ function AlertBell({ onClick }) {
             position: "absolute",
             top: "0",
             right: "0",
-            background: unreadCount > 5 ? "#dc2626" : "#ea580c",
+            background: unreadCount > 5 ? "var(--danger)" : "var(--warning)",
             color: "white",
             borderRadius: "50%",
             width: "20px",

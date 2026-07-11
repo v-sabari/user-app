@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiRequest, logoutUser } from "./apiClient";
 import AlertNotification from "./AlertNotification";
+import { Button, StatCard } from "./ui";
 
 /**
  * ✅ Day 78 — Admin Alerts Dashboard
@@ -115,105 +116,65 @@ function AdminAlerts() {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
+    <div className="container">
+      <div className="card">
         {/* ===== HEADER ===== */}
-        <div style={styles.header}>
+        <div className="top-bar">
           <div>
-            <h2>System Alerts</h2>
-            <p style={styles.subText}>Real-time security alerts across all user accounts</p>
+            <h2>System alerts</h2>
+            <p className="welcome-text">Real-time security alerts across all user accounts</p>
           </div>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-            <button
-              style={{ ...styles.btn, background: "#2563eb" }}
-              onClick={() => navigate("/dashboard")}
-            >
-              Dashboard
-            </button>
-            <button style={styles.btn} onClick={handleLogout}>
-              Logout
-            </button>
+          <div className="inline-actions">
+            <Button variant="secondary" onClick={() => navigate("/dashboard")}>Dashboard</Button>
+            <Button variant="secondary" onClick={handleLogout}>Logout</Button>
           </div>
         </div>
 
-        {message && <p style={styles.errorText}>{message}</p>}
+        {message && <p className="error-message">{message}</p>}
 
         {/* ===== STATS ===== */}
         {!loading && stats && (
-          <div style={styles.statsGrid}>
-            <div style={{ ...styles.statCard, borderTopColor: "#dc2626" }}>
-              <p style={styles.statLabel}>Critical</p>
-              <p style={{ ...styles.statValue, color: "#dc2626" }}>
-                {stats.critical}
-              </p>
-            </div>
-            <div style={{ ...styles.statCard, borderTopColor: "#ea580c" }}>
-              <p style={styles.statLabel}>High</p>
-              <p style={{ ...styles.statValue, color: "#ea580c" }}>
-                {stats.high}
-              </p>
-            </div>
-            <div style={{ ...styles.statCard, borderTopColor: "#d97706" }}>
-              <p style={styles.statLabel}>Medium</p>
-              <p style={{ ...styles.statValue, color: "#d97706" }}>
-                {stats.medium}
-              </p>
-            </div>
-            <div style={{ ...styles.statCard, borderTopColor: "#0891b2" }}>
-              <p style={styles.statLabel}>Total</p>
-              <p style={{ ...styles.statValue, color: "#0891b2" }}>
-                {stats.total}
-              </p>
-            </div>
+          <div className="stat-grid" style={{ marginBottom: "20px" }}>
+            <StatCard label="Critical" value={stats.critical} accent="var(--danger)" valueColor="var(--danger)" />
+            <StatCard label="High" value={stats.high} accent="#ea580c" valueColor="#ea580c" />
+            <StatCard label="Medium" value={stats.medium} accent="var(--warning)" valueColor="var(--warning)" />
+            <StatCard label="Total" value={stats.total} accent="var(--info)" valueColor="var(--info)" />
           </div>
         )}
 
         {/* ===== FILTERS ===== */}
-        <div style={styles.filterSection}>
+        <div className="dashboard-toolbar">
           <input
             type="text"
             placeholder="Search by user email or alert message..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={styles.input}
           />
 
-          <select
-            value={severityFilter}
-            onChange={(e) => setSeverityFilter(e.target.value)}
-            style={styles.select}
-          >
-            <option value="">All Severity Levels</option>
+          <select value={severityFilter} onChange={(e) => setSeverityFilter(e.target.value)}>
+            <option value="">All severity levels</option>
             <option value="CRITICAL">🔴 Critical</option>
             <option value="HIGH">🟠 High</option>
             <option value="MEDIUM">🟡 Medium</option>
           </select>
 
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            style={styles.select}
-          >
-            <option value="">All Alert Types</option>
-            <option value="HIGH_RISK">⚠️ High Risk Score</option>
-            <option value="SUSPICIOUS_LOGIN">🚨 Suspicious Login</option>
-            <option value="PASSWORD_EXPIRING">⏰ Password Expiring</option>
-            <option value="BRUTE_FORCE">🔴 Brute Force</option>
-            <option value="ACCOUNT_LOCKED">🔐 Account Locked</option>
+          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+            <option value="">All alert types</option>
+            <option value="HIGH_RISK">⚠️ High risk score</option>
+            <option value="SUSPICIOUS_LOGIN">🚨 Suspicious login</option>
+            <option value="PASSWORD_EXPIRING">⏰ Password expiring</option>
+            <option value="BRUTE_FORCE">🔴 Brute force</option>
+            <option value="ACCOUNT_LOCKED">🔐 Account locked</option>
           </select>
 
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            style={styles.select}
-          >
-            <option value="severity">Sort by Severity</option>
-            <option value="time">Sort by Time</option>
-            <option value="type">Sort by Type</option>
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+            <option value="severity">Sort by severity</option>
+            <option value="time">Sort by time</option>
+            <option value="type">Sort by type</option>
           </select>
 
-          <button
-            style={{ ...styles.btn, background: "#111827" }}
+          <Button
+            variant="secondary"
             onClick={() => {
               setSearchTerm("");
               setSeverityFilter("");
@@ -221,17 +182,17 @@ function AdminAlerts() {
               setSortBy("severity");
             }}
           >
-            Reset Filters
-          </button>
+            Reset filters
+          </Button>
         </div>
 
         {/* ===== ALERTS LIST ===== */}
         {loading ? (
-          <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af" }}>
+          <div style={{ textAlign: "center", padding: "40px 0", color: "var(--faint)" }}>
             <p>Loading system alerts...</p>
           </div>
         ) : filteredAlerts.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af" }}>
+          <div style={{ textAlign: "center", padding: "40px 0", color: "var(--faint)" }}>
             <p style={{ fontSize: "16px", margin: "0 0 6px" }}>✅ No alerts match your filters</p>
             <p style={{ fontSize: "13px", margin: 0 }}>
               {alerts.length === 0
@@ -241,8 +202,8 @@ function AdminAlerts() {
           </div>
         ) : (
           <div style={{ marginTop: "20px" }}>
-            <h3 style={{ margin: "0 0 16px", fontSize: "16px", fontWeight: "700", color: "#111827" }}>
-              Active Alerts ({filteredAlerts.length})
+            <h3 style={{ margin: "0 0 16px", fontSize: "16px", fontWeight: "700", color: "var(--ink)" }}>
+              Active alerts ({filteredAlerts.length})
             </h3>
             <div>
               {filteredAlerts.map((alert) => (
@@ -258,31 +219,16 @@ function AdminAlerts() {
 
         {/* ===== ACTION BUTTONS ===== */}
         {!loading && filteredAlerts.length > 0 && (
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "20px" }}>
-            <button
-              style={{ ...styles.btn, background: "#dc2626" }}
-              onClick={() => setSeverityFilter("CRITICAL")}
-            >
-              Show Critical Only
-            </button>
-            <button
-              style={{ ...styles.btn, background: "#2563eb" }}
-              onClick={() => navigate("/users")}
-            >
-              Manage Users
-            </button>
-            <button
-              style={{ ...styles.btn, background: "#0891b2" }}
-              onClick={fetchAlerts}
-            >
-              Refresh Alerts
-            </button>
+          <div className="inline-actions" style={{ marginTop: "20px" }}>
+            <Button variant="danger" onClick={() => setSeverityFilter("CRITICAL")}>Show critical only</Button>
+            <Button variant="secondary" onClick={() => navigate("/users")}>Manage users</Button>
+            <Button variant="secondary" style={{ background: "var(--info)", color: "#fff" }} onClick={fetchAlerts}>Refresh alerts</Button>
           </div>
         )}
 
         {/* ===== FOOTER INFO ===== */}
         {!loading && filteredAlerts.length > 0 && (
-          <div style={styles.footerInfo}>
+          <div style={{ padding: "12px 0", fontSize: "13px", color: "var(--muted)", textAlign: "center", borderTop: "1px solid var(--line)", marginTop: "20px" }}>
             <p>
               Showing <strong>{filteredAlerts.length}</strong> of{" "}
               <strong>{alerts.length}</strong> alerts
@@ -294,113 +240,5 @@ function AdminAlerts() {
     </div>
   );
 }
-
-/* ===== STYLES ===== */
-const styles = {
-  container: {
-    maxWidth: "1100px",
-    margin: "auto",
-    padding: "30px",
-  },
-  card: {
-    border: "1px solid #e5e7eb",
-    borderRadius: "12px",
-    padding: "24px",
-    background: "#ffffff",
-    boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: "24px",
-    flexWrap: "wrap",
-    gap: "12px",
-  },
-  subText: {
-    color: "#6b7280",
-    margin: "4px 0 0",
-    fontSize: "14px",
-  },
-  btn: {
-    padding: "8px 16px",
-    cursor: "pointer",
-    border: "none",
-    borderRadius: "6px",
-    color: "white",
-    background: "#374151",
-    fontSize: "14px",
-    fontWeight: "500",
-  },
-  errorText: {
-    color: "#dc2626",
-    background: "#fee2e2",
-    padding: "12px 16px",
-    borderRadius: "8px",
-    margin: "0 0 20px",
-  },
-  statsGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-    gap: "12px",
-    marginBottom: "20px",
-  },
-  statCard: {
-    borderTop: "3px solid",
-    border: "1px solid #e5e7eb",
-    borderRadius: "8px",
-    padding: "14px",
-    background: "#f9fafb",
-    textAlign: "center",
-  },
-  statLabel: {
-    margin: "0 0 6px",
-    fontSize: "12px",
-    fontWeight: "600",
-    color: "#6b7280",
-    textTransform: "uppercase",
-    letterSpacing: "0.05em",
-  },
-  statValue: {
-    margin: 0,
-    fontSize: "28px",
-    fontWeight: "800",
-    lineHeight: "1",
-  },
-  filterSection: {
-    display: "flex",
-    gap: "10px",
-    flexWrap: "wrap",
-    marginBottom: "20px",
-    padding: "16px",
-    background: "#f9fafb",
-    borderRadius: "8px",
-    alignItems: "center",
-  },
-  input: {
-    flex: 1,
-    minWidth: "200px",
-    padding: "8px 12px",
-    border: "1px solid #d1d5db",
-    borderRadius: "6px",
-    fontSize: "14px",
-  },
-  select: {
-    padding: "8px 12px",
-    border: "1px solid #d1d5db",
-    borderRadius: "6px",
-    fontSize: "14px",
-    cursor: "pointer",
-    background: "white",
-  },
-  footerInfo: {
-    padding: "12px 0",
-    fontSize: "13px",
-    color: "#6b7280",
-    textAlign: "center",
-    borderTop: "1px solid #e5e7eb",
-    marginTop: "20px",
-  },
-};
 
 export default AdminAlerts;

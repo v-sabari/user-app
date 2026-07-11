@@ -82,11 +82,12 @@ export function MatchHint({ matches, matchText = "Passwords match", mismatchText
 export function AuthMark({ label = "SecureAuth" }) {
   return (
     <div className="auth-mark">
-      <div className="auth-mark-badge">◆</div>
+      <img src="/favicon.svg" alt="" className="auth-mark-badge" width="28" height="28" />
       <span className="auth-mark-name">{label}</span>
     </div>
   );
 }
+
 
 // ================= STAT CARD =================
 // Generic metric tile. `accent` sets the top border color, `valueColor`

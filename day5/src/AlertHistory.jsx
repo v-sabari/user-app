@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiRequest, logoutUser } from "./apiClient";
+import { Button, StatCard } from "./ui";
 
 /**
  * ✅ Day 79 — Alert History Component
@@ -116,106 +117,66 @@ function AlertHistory() {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
+    <div className="container">
+      <div className="card">
         {/* ===== HEADER ===== */}
-        <div style={styles.header}>
+        <div className="top-bar">
           <div>
-            <h2>Alert History</h2>
-            <p style={styles.subText}>Archive of all past security alerts</p>
+            <h2>Alert history</h2>
+            <p className="welcome-text">Archive of all past security alerts</p>
           </div>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-            <button
-              style={{ ...styles.btn, background: "#2563eb" }}
-              onClick={() => navigate("/security-alerts")}
-            >
-              Active Alerts
-            </button>
-            <button
-              style={{ ...styles.btn, background: "#0891b2" }}
-              onClick={() => navigate("/dashboard")}
-            >
-              Dashboard
-            </button>
-            <button style={styles.btn} onClick={handleLogout}>
-              Logout
-            </button>
+          <div className="inline-actions">
+            <Button variant="secondary" onClick={() => navigate("/security-alerts")}>Active alerts</Button>
+            <Button variant="secondary" style={{ background: "var(--info)", color: "#fff" }} onClick={() => navigate("/dashboard")}>Dashboard</Button>
+            <Button variant="secondary" onClick={handleLogout}>Logout</Button>
           </div>
         </div>
 
-        {message && <p style={styles.errorText}>{message}</p>}
+        {message && <p className="error-message">{message}</p>}
 
         {/* ===== STATS ===== */}
         {!loading && stats && (
-          <div style={styles.statsGrid}>
-            <div style={{ ...styles.statCard, borderTopColor: "#0891b2" }}>
-              <p style={styles.statLabel}>Total Alerts</p>
-              <p style={{ ...styles.statValue, color: "#0891b2" }}>
-                {stats.total}
-              </p>
-            </div>
-            <div style={{ ...styles.statCard, borderTopColor: "#dc2626" }}>
-              <p style={styles.statLabel}>Active</p>
-              <p style={{ ...styles.statValue, color: "#dc2626" }}>
-                {stats.active}
-              </p>
-            </div>
-            <div style={{ ...styles.statCard, borderTopColor: "#6b7280" }}>
-              <p style={styles.statLabel}>Archived</p>
-              <p style={{ ...styles.statValue, color: "#6b7280" }}>
-                {stats.archived}
-              </p>
-            </div>
+          <div className="stat-grid" style={{ marginBottom: "20px" }}>
+            <StatCard label="Total alerts" value={stats.total} accent="var(--info)" valueColor="var(--info)" />
+            <StatCard label="Active" value={stats.active} accent="var(--danger)" valueColor="var(--danger)" />
+            <StatCard label="Archived" value={stats.archived} accent="var(--muted)" valueColor="var(--muted)" />
           </div>
         )}
 
         {/* ===== FILTERS ===== */}
-        <div style={styles.filterSection}>
+        <div className="dashboard-toolbar">
           <input
             type="text"
             placeholder="Search by alert message or type..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={styles.input}
           />
 
-          <select
-            value={severityFilter}
-            onChange={(e) => setSeverityFilter(e.target.value)}
-            style={styles.select}
-          >
-            <option value="">All Severity</option>
+          <select value={severityFilter} onChange={(e) => setSeverityFilter(e.target.value)}>
+            <option value="">All severity</option>
             <option value="CRITICAL">🔴 Critical</option>
             <option value="HIGH">🟠 High</option>
             <option value="MEDIUM">🟡 Medium</option>
             <option value="INFO">ℹ️ Info</option>
           </select>
 
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            style={styles.select}
-          >
-            <option value="">All Types</option>
-            <option value="HIGH_RISK">⚠️ High Risk Score</option>
-            <option value="SUSPICIOUS_LOGIN">🚨 Suspicious Login</option>
-            <option value="PASSWORD_EXPIRING">⏰ Password Expiring</option>
-            <option value="BRUTE_FORCE_ATTEMPT">🔴 Brute Force</option>
-            <option value="PASSWORD_CHANGED">✅ Password Changed</option>
+          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+            <option value="">All types</option>
+            <option value="HIGH_RISK">⚠️ High risk score</option>
+            <option value="SUSPICIOUS_LOGIN">🚨 Suspicious login</option>
+            <option value="PASSWORD_EXPIRING">⏰ Password expiring</option>
+            <option value="BRUTE_FORCE_ATTEMPT">🔴 Brute force</option>
+            <option value="PASSWORD_CHANGED">✅ Password changed</option>
           </select>
 
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            style={styles.select}
-          >
-            <option value="date">Sort by Date (Newest)</option>
-            <option value="severity">Sort by Severity</option>
-            <option value="type">Sort by Type</option>
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+            <option value="date">Sort by date (newest)</option>
+            <option value="severity">Sort by severity</option>
+            <option value="type">Sort by type</option>
           </select>
 
-          <button
-            style={{ ...styles.btn, background: "#111827" }}
+          <Button
+            variant="secondary"
             onClick={() => {
               setSearchTerm("");
               setSeverityFilter("");
@@ -223,17 +184,17 @@ function AlertHistory() {
               setSortBy("date");
             }}
           >
-            Reset Filters
-          </button>
+            Reset filters
+          </Button>
         </div>
 
         {/* ===== ALERTS LIST ===== */}
         {loading ? (
-          <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af" }}>
+          <div style={{ textAlign: "center", padding: "40px 0", color: "var(--faint)" }}>
             <p>Loading alert history...</p>
           </div>
         ) : filteredAlerts.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af" }}>
+          <div style={{ textAlign: "center", padding: "40px 0", color: "var(--faint)" }}>
             <p style={{ fontSize: "16px", margin: "0 0 6px" }}>📋 No alerts match your filters</p>
             <p style={{ fontSize: "13px", margin: 0 }}>
               {alerts.length === 0 ? "No alert history yet" : "Try adjusting your filters"}
@@ -241,19 +202,19 @@ function AlertHistory() {
           </div>
         ) : (
           <div style={{ marginTop: "20px" }}>
-            <h3 style={{ margin: "0 0 16px", fontSize: "16px", fontWeight: "700", color: "#111827" }}>
-              Alert History ({filteredAlerts.length})
+            <h3 style={{ margin: "0 0 16px", fontSize: "16px", fontWeight: "700", color: "var(--ink)" }}>
+              Alert history ({filteredAlerts.length})
             </h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {filteredAlerts.map((alert) => (
                 <div
                   key={alert.id}
                   style={{
-                    background: "#ffffff",
+                    background: "var(--surface)",
                     border: `2px solid ${getSeverityColor(alert.severity)}`,
-                    borderRadius: "8px",
+                    borderRadius: "var(--r-md)",
                     padding: "12px 16px",
-                    boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
+                    boxShadow: "var(--shadow-xs)",
                   }}
                 >
                   <div
@@ -272,7 +233,7 @@ function AlertHistory() {
                             background: getSeverityColor(alert.severity),
                             color: "white",
                             padding: "2px 8px",
-                            borderRadius: "4px",
+                            borderRadius: "var(--r-sm)",
                             fontSize: "11px",
                             fontWeight: "700",
                           }}
@@ -281,10 +242,10 @@ function AlertHistory() {
                         </span>
                         <span
                           style={{
-                            background: "#f3f4f6",
-                            color: "#374151",
+                            background: "var(--surface-sunken)",
+                            color: "var(--ink-soft)",
                             padding: "2px 8px",
-                            borderRadius: "4px",
+                            borderRadius: "var(--r-sm)",
                             fontSize: "11px",
                             fontWeight: "700",
                           }}
@@ -294,10 +255,10 @@ function AlertHistory() {
                         {alert.archived && (
                           <span
                             style={{
-                              background: "#e5e7eb",
-                              color: "#6b7280",
+                              background: "var(--line)",
+                              color: "var(--muted)",
                               padding: "2px 8px",
-                              borderRadius: "4px",
+                              borderRadius: "var(--r-sm)",
                               fontSize: "11px",
                               fontWeight: "700",
                             }}
@@ -310,7 +271,7 @@ function AlertHistory() {
                         style={{
                           margin: "0 0 4px",
                           fontSize: "14px",
-                          color: "#111827",
+                          color: "var(--ink)",
                           fontWeight: "600",
                         }}
                       >
@@ -320,7 +281,7 @@ function AlertHistory() {
                         style={{
                           margin: 0,
                           fontSize: "12px",
-                          color: "#9ca3af",
+                          color: "var(--faint)",
                         }}
                       >
                         {formatDateTime(alert.createdAt)}
@@ -332,9 +293,9 @@ function AlertHistory() {
                       style={{
                         margin: "8px 0 0",
                         fontSize: "12px",
-                        color: "#6b7280",
+                        color: "var(--muted)",
                         paddingTop: "8px",
-                        borderTop: "1px solid #e5e7eb",
+                        borderTop: "1px solid var(--line)",
                       }}
                     >
                       Status: <strong>{alert.status}</strong>
@@ -348,124 +309,14 @@ function AlertHistory() {
 
         {/* ===== ACTION BUTTONS ===== */}
         {!loading && filteredAlerts.length > 0 && (
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "20px" }}>
-            <button
-              style={{ ...styles.btn, background: "#2563eb" }}
-              onClick={fetchAlertHistory}
-            >
-              Refresh History
-            </button>
-            <button
-              style={{ ...styles.btn, background: "#0891b2" }}
-              onClick={() => navigate("/security-audit")}
-            >
-              View Security Score
-            </button>
+          <div className="inline-actions" style={{ marginTop: "20px" }}>
+            <Button variant="secondary" onClick={fetchAlertHistory}>Refresh history</Button>
+            <Button variant="secondary" style={{ background: "var(--info)", color: "#fff" }} onClick={() => navigate("/security-audit")}>View security score</Button>
           </div>
         )}
       </div>
     </div>
   );
 }
-
-/* ===== STYLES ===== */
-const styles = {
-  container: {
-    maxWidth: "1000px",
-    margin: "auto",
-    padding: "30px",
-  },
-  card: {
-    border: "1px solid #e5e7eb",
-    borderRadius: "12px",
-    padding: "24px",
-    background: "#ffffff",
-    boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: "24px",
-    flexWrap: "wrap",
-    gap: "12px",
-  },
-  subText: {
-    color: "#6b7280",
-    margin: "4px 0 0",
-    fontSize: "14px",
-  },
-  btn: {
-    padding: "8px 16px",
-    cursor: "pointer",
-    border: "none",
-    borderRadius: "6px",
-    color: "white",
-    background: "#374151",
-    fontSize: "14px",
-    fontWeight: "500",
-  },
-  errorText: {
-    color: "#dc2626",
-    background: "#fee2e2",
-    padding: "12px 16px",
-    borderRadius: "8px",
-    margin: "0 0 20px",
-  },
-  statsGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-    gap: "12px",
-    marginBottom: "20px",
-  },
-  statCard: {
-    borderTop: "3px solid",
-    border: "1px solid #e5e7eb",
-    borderRadius: "8px",
-    padding: "14px",
-    background: "#f9fafb",
-    textAlign: "center",
-  },
-  statLabel: {
-    margin: "0 0 6px",
-    fontSize: "12px",
-    fontWeight: "600",
-    color: "#6b7280",
-    textTransform: "uppercase",
-    letterSpacing: "0.05em",
-  },
-  statValue: {
-    margin: 0,
-    fontSize: "28px",
-    fontWeight: "800",
-    lineHeight: "1",
-  },
-  filterSection: {
-    display: "flex",
-    gap: "10px",
-    flexWrap: "wrap",
-    marginBottom: "20px",
-    padding: "16px",
-    background: "#f9fafb",
-    borderRadius: "8px",
-    alignItems: "center",
-  },
-  input: {
-    flex: 1,
-    minWidth: "200px",
-    padding: "8px 12px",
-    border: "1px solid #d1d5db",
-    borderRadius: "6px",
-    fontSize: "14px",
-  },
-  select: {
-    padding: "8px 12px",
-    border: "1px solid #d1d5db",
-    borderRadius: "6px",
-    fontSize: "14px",
-    cursor: "pointer",
-    background: "white",
-  },
-};
 
 export default AlertHistory;

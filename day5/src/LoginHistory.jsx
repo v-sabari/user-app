@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiRequest, logoutUser } from "./apiClient";
+import { Button, StatCard } from "./ui";
 
 /**
  * ✅ Day 82 — Login History Component
@@ -112,15 +113,15 @@ function LoginHistory() {
         {/* ===== HEADER ===== */}
         <div className="top-bar">
           <div>
-            <h2>📍 Login History</h2>
+            <h2>📍 Login history</h2>
             <p className="welcome-text">
               View all your login attempts, devices, and locations
             </p>
           </div>
           <div className="inline-actions">
-            <button type="button" onClick={() => navigate("/dashboard")}>Dashboard</button>
-            <button type="button" onClick={() => navigate("/profile")}>Profile</button>
-            <button type="button" className="logout-btn" onClick={handleLogout}>Logout</button>
+            <Button variant="secondary" onClick={() => navigate("/dashboard")}>Dashboard</Button>
+            <Button variant="secondary" onClick={() => navigate("/profile")}>Profile</Button>
+            <Button variant="secondary" onClick={handleLogout}>Logout</Button>
           </div>
         </div>
 
@@ -130,40 +131,40 @@ function LoginHistory() {
         {/* ===== STATS SECTION ===== */}
         {stats && (
           <div className="dashboard-section">
-            <h3>Login Statistics</h3>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "12px" }}>
+            <h3>Login statistics</h3>
+            <div className="stat-grid">
 
-              <div style={{ background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: "12px", padding: "14px", borderTop: "3px solid #2563eb" }}>
-                <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "#6b7280", textTransform: "uppercase" }}>Total Logins</p>
-                <p style={{ margin: 0, fontSize: "26px", fontWeight: "800", color: "#2563eb" }}>{stats.totalLogins ?? 0}</p>
-              </div>
+              <StatCard label="Total logins" value={stats.totalLogins ?? 0} accent="var(--primary)" valueColor="var(--primary)" />
 
-              <div style={{ background: "#dcfce7", border: "1px solid #86efac", borderRadius: "12px", padding: "14px", borderTop: "3px solid #16a34a" }}>
-                <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "#6b7280", textTransform: "uppercase" }}>Successful</p>
-                <p style={{ margin: 0, fontSize: "26px", fontWeight: "800", color: "#16a34a" }}>{stats.successfulLogins ?? 0}</p>
-              </div>
+              <StatCard label="Successful" value={stats.successfulLogins ?? 0} accent="var(--success)" valueColor="var(--success)" />
 
-              <div style={{ background: stats.failedLogins > 0 ? "#fee2e2" : "#f0fdf4", border: `1px solid ${stats.failedLogins > 0 ? "#fca5a5" : "#bbf7d0"}`, borderRadius: "12px", padding: "14px", borderTop: `3px solid ${stats.failedLogins > 0 ? "#dc2626" : "#16a34a"}` }}>
-                <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "#6b7280", textTransform: "uppercase" }}>Failed</p>
-                <p style={{ margin: 0, fontSize: "26px", fontWeight: "800", color: stats.failedLogins > 0 ? "#dc2626" : "#16a34a" }}>{stats.failedLogins ?? 0}</p>
-              </div>
+              <StatCard
+                label="Failed"
+                value={stats.failedLogins ?? 0}
+                accent={stats.failedLogins > 0 ? "var(--danger)" : "var(--success)"}
+                valueColor={stats.failedLogins > 0 ? "var(--danger)" : "var(--success)"}
+              />
 
-              <div style={{ background: stats.failedLast24Hours > 0 ? "#fef3c7" : "#f0fdf4", border: `1px solid ${stats.failedLast24Hours > 0 ? "#fde68a" : "#bbf7d0"}`, borderRadius: "12px", padding: "14px", borderTop: `3px solid ${stats.failedLast24Hours > 0 ? "#d97706" : "#16a34a"}` }}>
-                <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "#6b7280", textTransform: "uppercase" }}>Failed (24h)</p>
-                <p style={{ margin: 0, fontSize: "26px", fontWeight: "800", color: stats.failedLast24Hours > 0 ? "#d97706" : "#16a34a" }}>{stats.failedLast24Hours ?? 0}</p>
-              </div>
+              <StatCard
+                label="Failed (24h)"
+                value={stats.failedLast24Hours ?? 0}
+                accent={stats.failedLast24Hours > 0 ? "var(--warning)" : "var(--success)"}
+                valueColor={stats.failedLast24Hours > 0 ? "var(--warning)" : "var(--success)"}
+              />
 
-              <div style={{ background: stats.suspiciousLogins > 0 ? "#fee2e2" : "#f0fdf4", border: `1px solid ${stats.suspiciousLogins > 0 ? "#fca5a5" : "#bbf7d0"}`, borderRadius: "12px", padding: "14px", borderTop: `3px solid ${stats.suspiciousLogins > 0 ? "#dc2626" : "#16a34a"}` }}>
-                <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "#6b7280", textTransform: "uppercase" }}>🚨 Suspicious</p>
-                <p style={{ margin: 0, fontSize: "26px", fontWeight: "800", color: stats.suspiciousLogins > 0 ? "#dc2626" : "#16a34a" }}>{stats.suspiciousLogins ?? 0}</p>
-              </div>
+              <StatCard
+                label="🚨 Suspicious"
+                value={stats.suspiciousLogins ?? 0}
+                accent={stats.suspiciousLogins > 0 ? "var(--danger)" : "var(--success)"}
+                valueColor={stats.suspiciousLogins > 0 ? "var(--danger)" : "var(--success)"}
+              />
 
-              <div style={{ background: "#f0fdfa", border: "1px solid #99f6e4", borderRadius: "12px", padding: "14px", borderTop: "3px solid #0891b2" }}>
-                <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "600", color: "#6b7280", textTransform: "uppercase" }}>Last Login</p>
-                <p style={{ margin: 0, fontSize: "13px", fontWeight: "700", color: "#0891b2" }}>
-                  {stats.lastLoginTime ? formatDateTime(stats.lastLoginTime) : "Never"}
-                </p>
-              </div>
+              <StatCard
+                label="Last login"
+                value={stats.lastLoginTime ? formatDateTime(stats.lastLoginTime) : "Never"}
+                accent="var(--info)"
+                valueColor="var(--info)"
+              />
 
             </div>
           </div>
@@ -172,16 +173,16 @@ function LoginHistory() {
         {/* ===== LOGIN HISTORY SECTION ===== */}
         <div className="dashboard-section">
           <h3>
-            Login Records
-            <span style={{ marginLeft: "10px", fontSize: "14px", color: "#6b7280", fontWeight: "400" }}>
+            Login records
+            <span style={{ marginLeft: "10px", fontSize: "14px", color: "var(--muted)", fontWeight: "400" }}>
               ({totalElements} total)
             </span>
           </h3>
 
           {loading ? (
-            <p style={{ color: "#9ca3af" }}>Loading login history...</p>
+            <p style={{ color: "var(--faint)" }}>Loading login history...</p>
           ) : loginHistory.length === 0 ? (
-            <p style={{ color: "#9ca3af", textAlign: "center", padding: "30px 0" }}>
+            <p style={{ color: "var(--faint)", textAlign: "center", padding: "30px 0" }}>
               No login history found.
             </p>
           ) : (
@@ -192,8 +193,8 @@ function LoginHistory() {
                   <div
                     key={login.id}
                     style={{
-                      background: login.isSuspicious ? "#fff7ed" : "#ffffff",
-                      border: `1px solid ${login.isSuspicious ? "#fed7aa" : "#e5e7eb"}`,
+                      background: login.isSuspicious ? "#fff7ed" : "var(--surface)",
+                      border: `1px solid ${login.isSuspicious ? "#fed7aa" : "var(--line)"}`,
                       borderRadius: "12px",
                       padding: "14px 16px",
                       display: "flex",
@@ -239,44 +240,44 @@ function LoginHistory() {
                       </div>
 
                       {/* Timestamp */}
-                      <span style={{ fontSize: "11px", color: "#9ca3af", fontWeight: "500", whiteSpace: "nowrap" }}>
+                      <span style={{ fontSize: "11px", color: "var(--faint)", fontWeight: "500", whiteSpace: "nowrap" }}>
                         {formatDateTime(login.loginTime)}
                       </span>
                     </div>
 
                     {/* ===== DEVICE INFO ===== */}
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px", fontSize: "13px", color: "#6b7280" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px", fontSize: "13px", color: "var(--muted)" }}>
                       <div>
-                        <p style={{ margin: "0 0 3px", fontSize: "11px", fontWeight: "600", color: "#374151" }}>Device</p>
+                        <p style={{ margin: "0 0 3px", fontSize: "11px", fontWeight: "600", color: "var(--ink-soft)" }}>Device</p>
                         <p style={{ margin: 0 }}>{login.deviceType || "Unknown"}</p>
                       </div>
 
                       <div>
-                        <p style={{ margin: "0 0 3px", fontSize: "11px", fontWeight: "600", color: "#374151" }}>Browser</p>
+                        <p style={{ margin: "0 0 3px", fontSize: "11px", fontWeight: "600", color: "var(--ink-soft)" }}>Browser</p>
                         <p style={{ margin: 0 }}>{login.browser || "Unknown"}</p>
                       </div>
 
                       <div>
-                        <p style={{ margin: "0 0 3px", fontSize: "11px", fontWeight: "600", color: "#374151" }}>OS</p>
+                        <p style={{ margin: "0 0 3px", fontSize: "11px", fontWeight: "600", color: "var(--ink-soft)" }}>OS</p>
                         <p style={{ margin: 0 }}>{login.operatingSystem || "Unknown"}</p>
                       </div>
 
                       <div>
-                        <p style={{ margin: "0 0 3px", fontSize: "11px", fontWeight: "600", color: "#374151" }}>IP Address</p>
-                        <p style={{ margin: 0, fontFamily: "monospace", fontSize: "12px" }}>{login.ipAddress || "N/A"}</p>
+                        <p style={{ margin: "0 0 3px", fontSize: "11px", fontWeight: "600", color: "var(--ink-soft)" }}>IP Address</p>
+                        <p style={{ margin: 0, fontFamily: "var(--font-mono)", fontSize: "12px" }}>{login.ipAddress || "N/A"}</p>
                       </div>
                     </div>
 
                     {/* ===== FAILURE REASON (if failed) ===== */}
                     {login.status === "FAILED" && login.failureReason && (
-                      <p style={{ margin: 0, fontSize: "12px", color: "#dc2626", fontWeight: "600" }}>
+                      <p style={{ margin: 0, fontSize: "12px", color: "var(--danger)", fontWeight: "600" }}>
                         Reason: {login.failureReason}
                       </p>
                     )}
 
                     {/* ===== SUSPICION REASON (if suspicious) ===== */}
                     {login.isSuspicious && login.suspicionReason && (
-                      <p style={{ margin: 0, fontSize: "12px", color: "#d97706", fontWeight: "600" }}>
+                      <p style={{ margin: 0, fontSize: "12px", color: "var(--warning)", fontWeight: "600" }}>
                         ⚠️ {login.suspicionReason}
                       </p>
                     )}
@@ -286,15 +287,11 @@ function LoginHistory() {
 
               {/* ===== PAGINATION ===== */}
               <div className="pagination">
-                <button type="button" onClick={() => setPage(page - 1)} disabled={page === 0}>
-                  Prev
-                </button>
+                <Button variant="secondary" onClick={() => setPage(page - 1)} disabled={page === 0}>Prev</Button>
                 <span>
                   Page {totalPages === 0 ? 0 : page + 1} of {totalPages}
                 </span>
-                <button type="button" onClick={() => setPage(page + 1)} disabled={page >= totalPages - 1 || totalPages === 0}>
-                  Next
-                </button>
+                <Button variant="secondary" onClick={() => setPage(page + 1)} disabled={page >= totalPages - 1 || totalPages === 0}>Next</Button>
               </div>
             </>
           )}
